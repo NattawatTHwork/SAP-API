@@ -4,6 +4,7 @@ include_once '../vendor/firebase/php-jwt/src/JWT.php';
 include_once '../vendor/firebase/php-jwt/src/Key.php';
 include_once '../class/users.php';
 include_once '../class/token.php';
+include_once '../class/role_menus.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -28,11 +29,21 @@ try {
             $loginResult = $users->login($username, $password);
 
             if ($loginResult['status'] === 'success') {
+                $role_menus = new RoleMenus();
+                $role_menus_raw = $role_menus->getRoleMenu($loginResult['role']);
+                $menuList = array_column($role_menus_raw, 'menu_id');
+                $menuList = array_map('strval', $menuList);
+
                 $tokenClass = new Token();
                 $token = $tokenClass->generateToken([
                     'user_id' => $loginResult['user_id'],
-                    'username' => $loginResult['username']
+                    'username' => $loginResult['username'],
+                    'allowed_menu' => $menuList
                 ]);
+
+                // $aa = $tokenClass->decodeToken($token);
+                // print_r($aa);
+                // exit;
 
                 http_response_code(200);
                 echo json_encode(array(

@@ -19,7 +19,9 @@ class DBConnect {
     }
 
     public function __destruct() {
-        pg_close($this->connection);
+        if ($this->connection && is_resource($this->connection)) {
+            pg_close($this->connection);
+        }
     }
 }
 ?>

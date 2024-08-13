@@ -43,7 +43,7 @@ class Users
     public function createUser($username, $userPassword, $firstname, $lastname, $role)
     {
         $query = 'INSERT INTO cm_sap.tb_users (username, user_password, firstname, lastname, role, created_at, updated_at, statusflag, is_deleted) 
-                  VALUES ($1, $2, $3, $4, $5, NOW(), NOW(), true, false) RETURNING user_code';
+                  VALUES ($1, $2, $3, $4, $5, NOW(), NOW(), true, false) RETURNING user_id';
         $result = pg_prepare($this->connection, "create_user", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for creating user.');
@@ -103,7 +103,7 @@ class Users
 
     public function login($username, $password)
     {
-        $query = 'SELECT user_id, username, user_password, statusflag, is_deleted FROM cm_sap.tb_users WHERE username = $1';
+        $query = 'SELECT user_id, username, user_password, statusflag, is_deleted, role FROM cm_sap.tb_users WHERE username = $1';
         $result = pg_prepare($this->connection, "login_user", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for user login.');
@@ -139,7 +139,8 @@ class Users
         return array(
             'status' => 'success',
             'user_id' => $user['user_id'],
-            'username' => $user['username']
+            'username' => $user['username'],
+            'role' => $user['role']
         );
     }
        
