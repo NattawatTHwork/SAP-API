@@ -1,15 +1,18 @@
 <?php
 include_once '../connect/db_connect.php';
+include_once 'Encryption.php'; // รวมไฟล์คลาส Encryption
 
 class Users
 {
     private $db;
     private $connection;
+    private $encryption;
 
     public function __construct()
     {
         $this->db = new DBConnect();
         $this->connection = $this->db->getConnection();
+        $this->encryption = new Encryption(); // สร้างออบเจกต์ Encryption
     }
 
     public function getUserAll()
@@ -23,17 +26,29 @@ class Users
         if (!$result) {
             throw new Exception('Failed to execute SQL query for fetching all users.');
         }
-        return pg_fetch_all($result);
+
+        $users = pg_fetch_all($result);
+        if ($users === false) {
+            return [];
+        }
+
+        foreach ($users as &$user) {
+            $user['user_id'] = $this->encryption->encrypt($user['user_id']);
+        }
+
+        return $users;
     }
 
-    public function getUserById($user_id)
+    public function getUserById($encryptedUserId)
     {
+        $userId = $this->encryption->decrypt($encryptedUserId);
+
         $query = 'SELECT user_id, username, firstname, lastname, role, statusflag FROM cm_sap.tb_users WHERE user_id = $1 AND is_deleted = false';
         $result = pg_prepare($this->connection, "get_user_by_id", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for fetching user by ID.');
         }
-        $result = pg_execute($this->connection, "get_user_by_id", array($user_id));
+        $result = pg_execute($this->connection, "get_user_by_id", array($userId));
         if (!$result) {
             throw new Exception('Failed to execute SQL query for fetching user by ID.');
         }
@@ -52,11 +67,14 @@ class Users
         if (!$result) {
             throw new Exception('Failed to execute SQL query for creating user.');
         }
-        return pg_fetch_result($result, 0, 0);
+        $userId = pg_fetch_result($result, 0, 0);
+        return $this->encryption->encrypt($userId);
     }
 
-    public function updateUser($user_id, $firstname, $lastname, $role, $statusflag)
+    public function updateUser($encryptedUserId, $firstname, $lastname, $role, $statusflag)
     {
+        $userId = $this->encryption->decrypt($encryptedUserId);
+
         $query = 'UPDATE cm_sap.tb_users 
                   SET firstname = $2, lastname = $3, role = $4, statusflag = $5, updated_at = NOW() 
                   WHERE user_id = $1 AND is_deleted = false';
@@ -64,37 +82,41 @@ class Users
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for updating user.');
         }
-        $result = pg_execute($this->connection, "update_user", array($user_id, $firstname, $lastname, $role, $statusflag));
+        $result = pg_execute($this->connection, "update_user", array($userId, $firstname, $lastname, $role, $statusflag));
         if (!$result) {
             throw new Exception('Failed to execute SQL query for updating user.');
         }
         return pg_affected_rows($result);
     }
 
-    public function updateUserPassword($user_id, $newPassword)
+    public function updateUserPassword($encryptedUserId, $newPassword)
     {
+        $userId = $this->encryption->decrypt($encryptedUserId);
+
         $query = 'UPDATE cm_sap.tb_users SET user_password = $2, updated_at = NOW() 
                   WHERE user_id = $1 AND is_deleted = false';
         $result = pg_prepare($this->connection, "update_user_password", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for updating user password.');
         }
-        $result = pg_execute($this->connection, "update_user_password", array($user_id, $newPassword));
+        $result = pg_execute($this->connection, "update_user_password", array($userId, $newPassword));
         if (!$result) {
             throw new Exception('Failed to execute SQL query for updating user password.');
         }
         return pg_affected_rows($result);
     }
 
-    public function deleteUser($user_id)
+    public function deleteUser($encryptedUserId)
     {
+        $userId = $this->encryption->decrypt($encryptedUserId);
+
         $query = 'UPDATE cm_sap.tb_users SET is_deleted = true, updated_at = NOW() 
                   WHERE user_id = $1 AND is_deleted = false';
         $result = pg_prepare($this->connection, "delete_user", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for deleting user.');
         }
-        $result = pg_execute($this->connection, "delete_user", array($user_id));
+        $result = pg_execute($this->connection, "delete_user", array($userId));
         if (!$result) {
             throw new Exception('Failed to execute SQL query for deleting user.');
         }
@@ -113,7 +135,6 @@ class Users
             throw new Exception('Failed to execute SQL query for user login.');
         }
         $user = pg_fetch_assoc($result);
-        // return array('status' => 'error', 'message' => $user);
     
         if (!$user) {
             // Username does not exist
@@ -138,10 +159,10 @@ class Users
         // Successful login
         return array(
             'status' => 'success',
-            'user_id' => $user['user_id'],
+            'user_id' => $this->encryption->encrypt($user['user_id']),
             'username' => $user['username'],
             'role' => $user['role']
         );
     }
-       
 }
+?>
