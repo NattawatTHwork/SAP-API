@@ -41,10 +41,6 @@ try {
                     'allowed_menu' => $menuList
                 ]);
 
-                // $aa = $tokenClass->decodeToken($token);
-                // print_r($aa);
-                // exit;
-
                 http_response_code(200);
                 echo json_encode(array(
                     "status" => "success",
