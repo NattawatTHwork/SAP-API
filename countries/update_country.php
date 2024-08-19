@@ -9,7 +9,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
 
-        $required_fields = ['country_id', 'country_code', 'name'];
+        $required_fields = ['country_id', 'country_code', 'country_name'];
         $missing_fields = [];
 
         foreach ($required_fields as $field) {
@@ -22,7 +22,7 @@ try {
             $country_id = trim($data['country_id']);
             $country_code = trim($data['country_code']);
             $other_country_key = isset($data['other_country_key']) ? trim($data['other_country_key']) : '';
-            $name = trim($data['name']);
+            $country_name = trim($data['country_name']);
             $full_name = isset($data['full_name']) ? trim($data['full_name']) : '';
             $nationality = isset($data['nationality']) ? trim($data['nationality']) : '';
             $full_nationality = isset($data['full_nationality']) ? trim($data['full_nationality']) : '';
@@ -48,7 +48,7 @@ try {
                 $country_id,
                 $country_code,
                 $other_country_key,
-                $name,
+                $country_name,
                 $full_name,
                 $nationality,
                 $full_nationality,

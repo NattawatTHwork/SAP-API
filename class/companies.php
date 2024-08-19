@@ -39,7 +39,7 @@ class Companies
     public function getCompany($encryptedCompanyId)
     {
         $companyId = $this->encryption->decrypt($encryptedCompanyId);
-        $query = 'SELECT company_id, company_code, name_th, name_en, search_first, search_second, a_road, a_number, a_address, a_province, a_zip_code, zone, timezone, tb_companies.country_id AS country_id, country_code, name AS country_name, postbox, zip_code, company_zip_code, language, phone, phone_ex, mobile_phone, fax, fax_ex, email, standard_communication, comment FROM cm_sap.tb_companies INNER JOIN cm_sap.tb_countries ON tb_companies.country_id = tb_countries.country_id WHERE tb_companies.company_id = $1 AND tb_companies.is_deleted = false';
+        $query = 'SELECT company_id, company_code, name_th, name_en, search_first, search_second, a_road, a_number, a_address, a_province, a_zip_code, zone, timezone, tb_companies.country_id AS country_id, country_code, country_name, postbox, zip_code, company_zip_code, language, phone, phone_ex, mobile_phone, fax, fax_ex, email, standard_communication, comment FROM cm_sap.tb_companies INNER JOIN cm_sap.tb_countries ON tb_companies.country_id = tb_countries.country_id WHERE tb_companies.company_id = $1 AND tb_companies.is_deleted = false';
         $result = pg_prepare($this->connection, "get_company_by_id", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for getting company by ID.');
