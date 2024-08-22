@@ -9,7 +9,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
 
-        $required_fields = ['sub_company_id', 'sub_company_code', 'sub_company_name', 'company_id', 'country_id'];
+        $required_fields = ['sub_company_id', 'sub_company_code', 'sub_company_name', 'country_id', 'business_type_id'];
         $missing_fields = [];
 
         foreach ($required_fields as $field) {
@@ -20,15 +20,14 @@ try {
 
         if (empty($missing_fields)) {
             $sub_company_id = trim($data['sub_company_id']);
-            $company_id = trim($data['company_id']);
             $sub_company_code = trim($data['sub_company_code']);
             $sub_company_name = trim($data['sub_company_name']);
+            $business_type_id = trim($data['business_type_id']);
             $cnpj_bus_place = isset($data['cnpj_bus_place']) ? trim($data['cnpj_bus_place']) : '';
             $state_tax = isset($data['state_tax']) ? trim($data['state_tax']) : '';
             $munic_tax = isset($data['munic_tax']) ? trim($data['munic_tax']) : '';
             $bp_cfop_cat = isset($data['bp_cfop_cat']) ? trim($data['bp_cfop_cat']) : '';
             $representative_name = isset($data['representative_name']) ? trim($data['representative_name']) : '';
-            $business_type = isset($data['business_type']) ? trim($data['business_type']) : '';
             $industry_type = isset($data['industry_type']) ? trim($data['industry_type']) : '';
             $tax_number1 = isset($data['tax_number1']) ? trim($data['tax_number1']) : '';
             $tax_number2 = isset($data['tax_number2']) ? trim($data['tax_number2']) : '';
@@ -59,8 +58,8 @@ try {
 
             $subCompany = new SubCompanies();
             $result = $subCompany->updateSubCompany(
-                $sub_company_id, $company_id, $sub_company_code, $sub_company_name, $cnpj_bus_place, 
-                $state_tax, $munic_tax, $bp_cfop_cat, $representative_name, $business_type, 
+                $sub_company_id, $sub_company_code, $sub_company_name, $cnpj_bus_place, 
+                $state_tax, $munic_tax, $bp_cfop_cat, $representative_name, $business_type_id, 
                 $industry_type, $tax_number1, $tax_number2, $tax_office, $sub_name_th, 
                 $sub_name_en, $search_first, $search_second, $a_road, $a_number, $a_address, 
                 $a_province, $a_zip_code, $zone, $timezone, $country_id, $postbox, $zip_code, 

@@ -9,7 +9,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
 
-        $required_fields = ['username', 'user_password', 'firstname', 'lastname', 'role'];
+        $required_fields = ['username', 'user_password', 'firstname', 'lastname', 'role_id'];
         $missing_fields = [];
 
         foreach ($required_fields as $field) {
@@ -23,14 +23,17 @@ try {
             $password = trim($data['user_password']);
             $firstname = trim($data['firstname']);
             $lastname = trim($data['lastname']);
-            $role = trim($data['role']);
+            $role_id = trim($data['role_id']);
 
             $users = new Users();
-            $userId = $users->createUser($username, password_hash($password, PASSWORD_DEFAULT), $firstname, $lastname, $role);
+            $result = $users->createUser($username, password_hash($password, PASSWORD_DEFAULT), $firstname, $lastname, $role_id);
 
-            if ($userId) {
-                http_response_code(201);
-                echo json_encode(array("status" => "success", "message" => "User created successfully", "user_id" => $userId));
+            if ($result === 'Username already exists') {
+                http_response_code(409);  // Conflict
+                echo json_encode(array("status" => "exists", "message" => $result));
+            } elseif ($result) {
+                http_response_code(201);  // Created
+                echo json_encode(array("status" => "success", "message" => "User created successfully", "user_id" => $result));
             } else {
                 throw new Exception("Error creating user.");
             }

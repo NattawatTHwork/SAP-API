@@ -9,7 +9,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
 
-        $required_fields = ['sub_company_code', 'sub_company_name', 'company_id', 'country_id'];
+        $required_fields = ['sub_company_code', 'sub_company_name', 'company_id', 'country_id', 'business_type_id'];
         $missing_fields = [];
 
         foreach ($required_fields as $field) {
@@ -23,12 +23,12 @@ try {
             $sub_company_name = trim($data['sub_company_name']);
             $company_id = trim($data['company_id']);
             $country_id = trim($data['country_id']);
+            $business_type_id = trim($data['business_type_id']);
             $cnpj_bus_place = isset($data['cnpj_bus_place']) ? trim($data['cnpj_bus_place']) : '';
             $state_tax = isset($data['state_tax']) ? trim($data['state_tax']) : '';
             $munic_tax = isset($data['munic_tax']) ? trim($data['munic_tax']) : '';
             $bp_cfop_cat = isset($data['bp_cfop_cat']) ? trim($data['bp_cfop_cat']) : '';
             $representative_name = isset($data['representative_name']) ? trim($data['representative_name']) : '';
-            $business_type = isset($data['business_type']) ? trim($data['business_type']) : '';
             $industry_type = isset($data['industry_type']) ? trim($data['industry_type']) : '';
             $tax_number1 = isset($data['tax_number1']) ? trim($data['tax_number1']) : '';
             $tax_number2 = isset($data['tax_number2']) ? trim($data['tax_number2']) : '';
@@ -66,7 +66,7 @@ try {
                 $munic_tax,
                 $bp_cfop_cat,
                 $representative_name,
-                $business_type,
+                $business_type_id,
                 $industry_type,
                 $tax_number1,
                 $tax_number2,

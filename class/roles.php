@@ -14,7 +14,7 @@ class Roles
 
     public function getRoleAll()
     {
-        $query = 'SELECT role_id, role FROM cm_sap.tb_roles WHERE is_deleted = false';
+        $query = 'SELECT role_id, role FROM cm_sap.tb_roles WHERE is_deleted = false ORDER BY role_id ASC';
         $result = pg_prepare($this->connection, "get_all_roles", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for retrieving all roles.');

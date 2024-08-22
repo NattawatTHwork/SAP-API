@@ -1,4 +1,5 @@
 <?php
+
 use \Firebase\JWT\JWT;
 use \Firebase\JWT\Key;
 
@@ -17,7 +18,7 @@ class Token
     public function generateToken($payload)
     {
         $issuedAt = time();
-        $expiration = $issuedAt + 3600; // Token valid for 1 hour
+        $expiration = $issuedAt + 84000; // Token valid for 1 hour
 
         $tokenPayload = array_merge($payload, [
             'iat' => $issuedAt,

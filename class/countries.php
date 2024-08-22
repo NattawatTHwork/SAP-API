@@ -55,7 +55,6 @@ class Countries
         $country['country_id'] = $this->encryption->encrypt($country['country_id']);
         return $country;
     }
-    
 
     public function createCountry($country_code, $other_country_key, $country_name, $full_name, $nationality, $full_nationality, $country_vehicle_key, $language_key, $major_currency_index, $major_currency, $member_euro, $trade_statistic_abbreviation, $step, $capital_goods_indicator, $iso_key, $three_iso_key, $intrastat_key, $address_outline_key, $standard_name_format, $type_country_name, $date_format, $decimal_format)
     {
@@ -88,7 +87,7 @@ class Countries
             throw new Exception('Failed to execute SQL query for updating country.');
         }
         return pg_affected_rows($result);
-    }    
+    }
 
     public function deleteCountry($encryptedCountryId)
     {

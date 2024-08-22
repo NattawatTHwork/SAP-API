@@ -24,4 +24,3 @@ class Encryption
         return openssl_decrypt($encrypted_data, $this->cipher, $this->key, 0, $iv);
     }
 }
-?>
