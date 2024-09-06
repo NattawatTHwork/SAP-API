@@ -68,9 +68,31 @@ class Companies
             throw new Exception('Failed to prepare SQL query for creating company.');
         }
         $result = pg_execute($this->connection, "create_company", array(
-            $company_code, $name_th, $name_en, $search_first, $search_second, $a_road, $a_number, $a_address, $a_province, $a_zip_code,
-            $zone, $timezone, $decryptedCountryId, $postbox, $zip_code, $company_zip_code, $language, $phone, $phone_ex, $mobile_phone,
-            $fax, $fax_ex, $email, $standard_communication, $comment
+            $company_code,
+            $name_th,
+            $name_en,
+            $search_first,
+            $search_second,
+            $a_road,
+            $a_number,
+            $a_address,
+            $a_province,
+            $a_zip_code,
+            $zone,
+            $timezone,
+            $decryptedCountryId,
+            $postbox,
+            $zip_code,
+            $company_zip_code,
+            $language,
+            $phone,
+            $phone_ex,
+            $mobile_phone,
+            $fax,
+            $fax_ex,
+            $email,
+            $standard_communication,
+            $comment
         ));
         if (!$result) {
             throw new Exception('Failed to execute SQL query for creating company.');
@@ -109,6 +131,87 @@ class Companies
         $result = pg_execute($this->connection, "delete_company", array($companyId));
         if (!$result) {
             throw new Exception('Failed to execute SQL query for deleting company.');
+        }
+        return pg_affected_rows($result);
+    }
+
+    public function getCompanyAdditional($encryptedCompanyId)
+    {
+        $companyId = $this->encryption->decrypt($encryptedCompanyId);
+        $query = 'SELECT tb_companies.chart_account_id, chart_account_country, company_second, fm_zone, credit_control_zone, 
+                  tb_companies.fiscal_year_id, description, non_system_company_code, company_all_code, actual_company_code, registration_number_vat, 
+                  doc_record_view, field_status_set, entry_period_set, max_ex_rate_diff, sample_acc_rule_set, workflow_select, 
+                  inflation_method, tax_currency_conv, co_area, current_cogs, biz_fin_stmt, fiscal_year_prop, init_val_date, 
+                  no_forex_diff_lc_clear, tax_base_net_val, fin_asset_mgmt, proc_acc_proc, allow_neg_entry, cash_mgmt_enabled, net_discount_base, split_quantity
+                  FROM cm_sap.tb_companies 
+                  INNER JOIN cm_sap.tb_chart_accounts ON tb_companies.chart_account_id = tb_chart_accounts.chart_account_id
+                  INNER JOIN cm_sap.tb_fiscal_years ON tb_companies.fiscal_year_id = tb_fiscal_years.fiscal_year_id
+                  WHERE company_id = $1 AND tb_companies.is_deleted = false';
+        $result = pg_prepare($this->connection, "get_company_additional_info", $query);
+        if (!$result) {
+            throw new Exception('Failed to prepare SQL query for getting additional company info.');
+        }
+        $result = pg_execute($this->connection, "get_company_additional_info", array($companyId));
+        if (!$result) {
+            throw new Exception('Failed to execute SQL query for getting additional company info.');
+        }
+        $company = pg_fetch_assoc($result);
+        if ($company === false) {
+            return null;
+        }
+        $company['chart_account_id'] = $this->encryption->encrypt($company['chart_account_id']);
+        $company['fiscal_year_id'] = $this->encryption->encrypt($company['fiscal_year_id']);
+        return $company;
+    }    
+
+    public function updateCompanyAdditional($encryptedCompanyId, $encryptedChartAccountId, $chart_account_country, $company_second, $fm_zone, $credit_control_zone, $encryptedFiscalYearId, $non_system_company_code, $company_all_code, $actual_company_code, $registration_number_vat, $doc_record_view, $field_status_set, $entry_period_set, $max_ex_rate_diff, $sample_acc_rule_set, $workflow_select, $inflation_method, $tax_currency_conv, $co_area, $current_cogs, $biz_fin_stmt, $fiscal_year_prop, $init_val_date, $no_forex_diff_lc_clear, $tax_base_net_val, $fin_asset_mgmt, $proc_acc_proc, $allow_neg_entry, $cash_mgmt_enabled, $net_discount_base, $split_quantity)
+    {
+        $companyId = $this->encryption->decrypt($encryptedCompanyId);
+        $chartAccountId = $this->encryption->decrypt($encryptedChartAccountId);
+        $fiscalYearId = $this->encryption->decrypt($encryptedFiscalYearId);
+        $query = 'UPDATE cm_sap.tb_companies 
+              SET chart_account_id = $2, chart_account_country = $3, company_second = $4, fm_zone = $5, credit_control_zone = $6, fiscal_year_id = $7, non_system_company_code = $8, company_all_code = $9, actual_company_code = $10, registration_number_vat = $11, doc_record_view = $12, field_status_set = $13, entry_period_set = $14, max_ex_rate_diff = $15, sample_acc_rule_set = $16, workflow_select = $17, inflation_method = $18, tax_currency_conv = $19, co_area = $20, current_cogs = $21, biz_fin_stmt = $22, fiscal_year_prop = $23, init_val_date = $24, no_forex_diff_lc_clear = $25, tax_base_net_val = $26, fin_asset_mgmt = $27, proc_acc_proc = $28, allow_neg_entry = $29, cash_mgmt_enabled = $30, net_discount_base = $31, split_quantity = $32, updated_at = NOW() 
+              WHERE company_id = $1 AND is_deleted = false';
+        $result = pg_prepare($this->connection, "update_company_additional_info", $query);
+        if (!$result) {
+            throw new Exception('Failed to prepare SQL query for updating additional company info.');
+        }
+        $result = pg_execute($this->connection, "update_company_additional_info", array(
+            $companyId,
+            $chartAccountId,
+            $chart_account_country,
+            $company_second,
+            $fm_zone,
+            $credit_control_zone,
+            $fiscalYearId,
+            $non_system_company_code,
+            $company_all_code,
+            $actual_company_code,
+            $registration_number_vat,
+            $doc_record_view,
+            $field_status_set,
+            $entry_period_set,
+            $max_ex_rate_diff,
+            $sample_acc_rule_set,
+            $workflow_select,
+            $inflation_method,
+            $tax_currency_conv,
+            $co_area,
+            $current_cogs,
+            $biz_fin_stmt,
+            $fiscal_year_prop,
+            $init_val_date,
+            $no_forex_diff_lc_clear,
+            $tax_base_net_val,
+            $fin_asset_mgmt,
+            $proc_acc_proc,
+            $allow_neg_entry,
+            $cash_mgmt_enabled,
+            $net_discount_base,
+            $split_quantity
+        ));
+        if (!$result) {
+            throw new Exception('Failed to execute SQL query for updating additional company info.');
         }
         return pg_affected_rows($result);
     }
