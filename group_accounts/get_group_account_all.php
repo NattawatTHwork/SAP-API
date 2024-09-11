@@ -3,19 +3,19 @@ include_once '../include/header.php';
 include_once '../vendor/firebase/php-jwt/src/JWT.php';
 include_once '../vendor/firebase/php-jwt/src/Key.php';
 include_once '../auth/authorization.php';
-include_once '../class/transaction_periods.php';
+include_once '../class/group_accounts.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        $transactionPeriods = new TransactionPeriods();
-        $periodList = $transactionPeriods->getTransactionPeriodAll();
+        $groupAccounts = new GroupAccounts();
+        $groupAccountList = $groupAccounts->getGroupAccountAll();
 
-        if ($periodList) {
+        if ($groupAccountList) {
             http_response_code(200);
-            echo json_encode(["status" => "success", "data" => $periodList]);
+            echo json_encode(["status" => "success", "data" => $groupAccountList]);
         } else {
             http_response_code(404);
-            echo json_encode(["status" => "error", "message" => "No periods found."]);
+            echo json_encode(["status" => "error", "message" => "No group accounts found."]);
         }
     } else {
         http_response_code(405);

@@ -11,7 +11,7 @@ try {
         $data = json_decode(file_get_contents('php://input'), true);
 
         // Define required fields
-        $required_fields = ['fiscal_year_id', 'transaction_period_type_id', 'account_from', 'account_to', 'period_from_first', 'period_from_first_year', 'period_to_first', 'period_to_first_year', 'period_from_second', 'period_from_second_year', 'period_to_second', 'period_to_second_year', 'augr'];
+        $required_fields = ['transaction_period_group_id', 'transaction_period_type_id', 'account_from', 'account_to', 'period_from_first', 'period_from_first_year', 'period_to_first', 'period_to_first_year', 'period_from_second', 'period_from_second_year', 'period_to_second', 'period_to_second_year', 'augr'];
         $missing_fields = [];
 
         // Check for missing fields
@@ -23,7 +23,7 @@ try {
 
         if (empty($missing_fields)) {
             // Retrieve and sanitize input data
-            $fiscal_year_id = trim($data['fiscal_year_id']);
+            $transaction_period_group_id = trim($data['transaction_period_group_id']);
             $transaction_period_type_id = trim($data['transaction_period_type_id']);
             $account_from = trim($data['account_from']);
             $account_to = trim($data['account_to']);
@@ -42,7 +42,7 @@ try {
             
             // Call the method to create a transaction period
             $transactionPeriodId = $transactionPeriods->createTransactionPeriod(
-                $fiscal_year_id,
+                $transaction_period_group_id,
                 $transaction_period_type_id,
                 $account_from,
                 $account_to,

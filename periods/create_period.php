@@ -9,7 +9,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
 
-        $required_fields = ['period_code', 'fiscal_year_id', 'number_month', 'number_day', 'change_year'];
+        $required_fields = ['period_code', 'period_group_id', 'number_month', 'number_day', 'change_year'];
         $missing_fields = [];
 
         foreach ($required_fields as $field) {
@@ -20,7 +20,7 @@ try {
 
         if (empty($missing_fields)) {
             $period_code = trim($data['period_code']);
-            $fiscal_year_id = trim($data['fiscal_year_id']);
+            $period_group_id = trim($data['period_group_id']);
             $number_month = trim($data['number_month']);
             $number_day = trim($data['number_day']);
             $change_year = trim($data['change_year']);
@@ -30,7 +30,7 @@ try {
             $periods = new Periods();
             $periodId = $periods->createPeriod(
                 $period_code,
-                $fiscal_year_id,
+                $period_group_id,
                 $number_month,
                 $number_day,
                 $change_year,

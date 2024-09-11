@@ -34,7 +34,7 @@ try {
             $registration_number_vat = isset($data['registration_number_vat']) ? trim($data['registration_number_vat']) : '';
             $doc_record_view = isset($data['doc_record_view']) ? trim($data['doc_record_view']) : '';
             $field_status_set = isset($data['field_status_set']) ? trim($data['field_status_set']) : '';
-            $entry_period_set = isset($data['entry_period_set']) ? trim($data['entry_period_set']) : '';
+            $transaction_period_group_id = isset($data['transaction_period_group_id']) ? trim($data['transaction_period_group_id']) : '';
             $max_ex_rate_diff = isset($data['max_ex_rate_diff']) ? trim($data['max_ex_rate_diff']) : '';
             $sample_acc_rule_set = isset($data['sample_acc_rule_set']) ? trim($data['sample_acc_rule_set']) : '';
             $workflow_select = isset($data['workflow_select']) ? trim($data['workflow_select']) : '';
@@ -69,7 +69,7 @@ try {
                 $registration_number_vat,
                 $doc_record_view,
                 $field_status_set,
-                $entry_period_set,
+                $transaction_period_group_id,
                 $max_ex_rate_diff,
                 $sample_acc_rule_set,
                 $workflow_select,

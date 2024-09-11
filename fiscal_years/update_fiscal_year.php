@@ -24,6 +24,9 @@ try {
             $description = trim($data['description']);
             $fiscal_year_check = isset($data['fiscal_year_check']) ? trim($data['fiscal_year_check']) : false;
             $calendar_year_check = isset($data['calendar_year_check']) ? trim($data['calendar_year_check']) : false;
+            $posting_period_count = isset($data['posting_period_count']) ? trim($data['posting_period_count']) : '0';
+            $special_period_count = isset($data['special_period_count']) ? trim($data['special_period_count']) : '0';
+            $period_group_id = isset($data['period_group_id']) ? trim($data['period_group_id']) : '0';
 
             $fiscalYears = new FiscalYears();
             $result = $fiscalYears->updateFiscalYear(
@@ -31,7 +34,10 @@ try {
                 $fiscal_year_code,
                 $description,
                 $fiscal_year_check,
-                $calendar_year_check
+                $calendar_year_check,
+                $posting_period_count, 
+                $special_period_count,
+                $period_group_id
             );
 
             if ($result) {

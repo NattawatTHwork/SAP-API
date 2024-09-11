@@ -12,7 +12,7 @@ try {
 
         // Define required fields
         $required_fields = [
-            'transaction_period_id', 'transaction_period_type_id', 'account_from', 'account_to',
+            'transaction_period_id', 'transaction_period_group_id', 'transaction_period_type_id', 'account_from', 'account_to',
             'period_from_first', 'period_from_first_year', 'period_to_first', 'period_to_first_year',
             'period_from_second', 'period_from_second_year', 'period_to_second', 'period_to_second_year', 'augr'
         ];
@@ -29,6 +29,7 @@ try {
         // If no fields are missing, proceed with the update
         if (empty($missing_fields)) {
             $transaction_period_id = trim($data['transaction_period_id']);
+            $transaction_period_group_id = trim($data['transaction_period_group_id']);
             $transaction_period_type_id = trim($data['transaction_period_type_id']);
             $account_from = trim($data['account_from']);
             $account_to = trim($data['account_to']);
@@ -48,6 +49,7 @@ try {
             // Call the updateTransactionPeriod method
             $result = $transactionPeriods->updateTransactionPeriod(
                 $transaction_period_id,
+                $transaction_period_group_id,
                 $transaction_period_type_id,
                 $account_from,
                 $account_to,

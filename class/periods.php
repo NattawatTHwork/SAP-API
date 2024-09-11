@@ -15,15 +15,15 @@ class Periods
         $this->encryption = new Encryption();
     }
 
-    public function getPeriodAll($encrypteFiscalYearId)
+    public function getPeriodAll($encryptePeriodGroupId)
     {
-        $fiscalYearId = $this->encryption->decrypt($encrypteFiscalYearId);
-        $query = 'SELECT period_id, period_code, fiscal_year_id, number_month, number_day, change_year, text_period_en, text_period_th FROM cm_sap.tb_periods WHERE is_deleted = false AND fiscal_year_id = $1 ORDER BY created_at ASC';
+        $PeriodGroupId = $this->encryption->decrypt($encryptePeriodGroupId);
+        $query = 'SELECT period_id, period_code, period_group_id, number_month, number_day, change_year, text_period_en, text_period_th FROM cm_sap.tb_periods WHERE is_deleted = false AND period_group_id = $1 ORDER BY created_at ASC';
         $result = pg_prepare($this->connection, "get_all_periods", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for getting all periods.');
         }
-        $result = pg_execute($this->connection, "get_all_periods", [$fiscalYearId]);
+        $result = pg_execute($this->connection, "get_all_periods", [$PeriodGroupId]);
         if (!$result) {
             throw new Exception('Failed to execute SQL query for getting all periods.');
         }
@@ -57,16 +57,16 @@ class Periods
         return $period;
     }
 
-    public function createPeriod($period_code, $fiscal_year_id, $number_month, $number_day, $change_year, $text_period_en, $text_period_th)
+    public function createPeriod($period_code, $period_group_id, $number_month, $number_day, $change_year, $text_period_en, $text_period_th)
     {
-        $fiscalYearId = $this->encryption->decrypt($fiscal_year_id);
-        $query = 'INSERT INTO cm_sap.tb_periods (period_code, fiscal_year_id, number_month, number_day, change_year, text_period_en, text_period_th, created_at, updated_at, is_deleted) 
+        $PeriodGroupId = $this->encryption->decrypt($period_group_id);
+        $query = 'INSERT INTO cm_sap.tb_periods (period_code, period_group_id, number_month, number_day, change_year, text_period_en, text_period_th, created_at, updated_at, is_deleted) 
                   VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW(), false) RETURNING period_id';
         $result = pg_prepare($this->connection, "create_period", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for creating period.');
         }
-        $result = pg_execute($this->connection, "create_period", array($period_code, $fiscalYearId, $number_month, $number_day, $change_year, $text_period_en, $text_period_th));
+        $result = pg_execute($this->connection, "create_period", array($period_code, $PeriodGroupId, $number_month, $number_day, $change_year, $text_period_en, $text_period_th));
         if (!$result) {
             throw new Exception('Failed to execute SQL query for creating period.');
         }

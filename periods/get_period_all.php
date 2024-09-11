@@ -7,15 +7,15 @@ include_once '../class/periods.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        if (!isset($_GET['fiscal_year_id'])) {
+        if (!isset($_GET['period_group_id'])) {
             http_response_code(400);
-            echo json_encode(["status" => "error", "message" => "Fiscal Year ID is required."]);
+            echo json_encode(["status" => "error", "message" => "Period Group ID is required."]);
             exit;
         }
-        $encrypteFiscalYearId = $_GET['fiscal_year_id'];
+        $encryptePeriodGroupId = $_GET['period_group_id'];
 
         $periods = new Periods();
-        $periodList = $periods->getPeriodAll($encrypteFiscalYearId);
+        $periodList = $periods->getPeriodAll($encryptePeriodGroupId);
 
         if ($periodList) {
             http_response_code(200);
