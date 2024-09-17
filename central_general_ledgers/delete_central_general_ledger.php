@@ -7,6 +7,7 @@ include_once '../class/central_general_ledgers.php'; // เปลี่ยนเ
 include_once '../class/gl_types.php'; // เปลี่ยนเป็นไฟล์ที่มี class GLTypes
 include_once '../class/gl_control_datas.php'; // เพิ่มการนำเข้าของ ControlData
 include_once '../class/gl_interest_bank_creations.php'; // เพิ่มการนำเข้าของ GLInterestBankCreations
+include_once '../class/gl_ca_datas.php'; // เพิ่มการนำเข้าของ GLCAData
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -27,6 +28,7 @@ try {
             $glTypes = new GLTypes();
             $controlData = new ControlData(); // สร้าง instance ของ ControlData
             $glInterestBankCreations = new GLInterestBankCreations(); // สร้าง instance ของ GLInterestBankCreations
+            $glCAData = new GLCAData(); // สร้าง instance ของ GLCAData
 
             // Delete Central General Ledger
             $result = $centralGeneralLedgers->deleteCentralGeneralLedger($centralGeneralLedgerId);
@@ -44,11 +46,18 @@ try {
                         $resultGLInterestBankCreation = $glInterestBankCreations->deleteGLInterestBankCreation($centralGeneralLedgerId);
 
                         if ($resultGLInterestBankCreation > 0) {
-                            http_response_code(200);
-                            echo json_encode([
-                                "status" => "success",
-                                "message" => "Central General Ledger, associated GL Types, Control Data, and GL Interest Bank Creation deleted successfully"
-                            ]);
+                            // Delete GL CA Data associated with the Central General Ledger
+                            $resultGLCAData = $glCAData->deleteGLCAData($centralGeneralLedgerId);
+
+                            if ($resultGLCAData > 0) {
+                                http_response_code(200);
+                                echo json_encode([
+                                    "status" => "success",
+                                    "message" => "Central General Ledger, associated GL Types, Control Data, GL Interest Bank Creation, and GL CA Data deleted successfully"
+                                ]);
+                            } else {
+                                throw new Exception("Error deleting GL CA Data associated with Central General Ledger.");
+                            }
                         } else {
                             throw new Exception("Error deleting GL Interest Bank Creation associated with Central General Ledger.");
                         }

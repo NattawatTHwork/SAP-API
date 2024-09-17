@@ -17,10 +17,10 @@ class CentralGeneralLedgers
 
     public function getAllCentralGeneralLedgers()
     {
-        $query = 'SELECT central_general_ledger_id, gl_account, tb_central_general_ledgers.company_id, company_code
+        $query = 'SELECT central_general_ledger_id, gl_account, tb_central_general_ledgers.company_id, company_code, tb_central_general_ledgers.created_at, username
                   FROM cm_sap.tb_central_general_ledgers 
-                  INNER JOIN cm_sap.tb_companies
-                  ON tb_central_general_ledgers.company_id = tb_companies.company_id
+                  INNER JOIN cm_sap.tb_companies ON tb_central_general_ledgers.company_id = tb_companies.company_id
+                  INNER JOIN cm_sap.tb_users ON tb_central_general_ledgers.user_create = tb_users.user_id
                   WHERE tb_central_general_ledgers.is_deleted = false 
                   ORDER BY tb_central_general_ledgers.created_at ASC';
         $result = pg_prepare($this->connection, "get_all_cgl", $query);
@@ -45,10 +45,10 @@ class CentralGeneralLedgers
     public function getCentralGeneralLedger($encryptedLedgerId)
     {
         $ledgerId = $this->encryption->decrypt($encryptedLedgerId);
-        $query = 'SELECT central_general_ledger_id, gl_account, tb_central_general_ledgers.company_id, company_code 
+        $query = 'SELECT central_general_ledger_id, gl_account, tb_central_general_ledgers.company_id, company_code, tb_central_general_ledgers.created_at, username
                   FROM cm_sap.tb_central_general_ledgers 
-                  INNER JOIN cm_sap.tb_companies
-                  ON tb_central_general_ledgers.company_id = tb_companies.company_id
+                  INNER JOIN cm_sap.tb_companies ON tb_central_general_ledgers.company_id = tb_companies.company_id
+                  INNER JOIN cm_sap.tb_users ON tb_central_general_ledgers.user_create = tb_users.user_id
                   WHERE central_general_ledger_id = $1 AND tb_central_general_ledgers.is_deleted = false';
         $result = pg_prepare($this->connection, "get_cgl_by_id", $query);
         if (!$result) {
@@ -67,17 +67,18 @@ class CentralGeneralLedgers
         return $ledger;
     }
 
-    public function createCentralGeneralLedger($gl_account, $encryptedCompanyId)
+    public function createCentralGeneralLedger($gl_account, $encryptedCompanyId, $encryptedUserId)
     {
         $CompanyId = $this->encryption->decrypt($encryptedCompanyId);
-        $query = 'INSERT INTO cm_sap.tb_central_general_ledgers (gl_account, company_id, created_at, updated_at, is_deleted) 
-                  VALUES ($1, $2, NOW(), NOW(), false) 
+        $UserId = $this->encryption->decrypt($encryptedUserId);
+        $query = 'INSERT INTO cm_sap.tb_central_general_ledgers (gl_account, company_id, user_create, created_at, updated_at, is_deleted) 
+                  VALUES ($1, $2, $3, NOW(), NOW(), false) 
                   RETURNING central_general_ledger_id';
         $result = pg_prepare($this->connection, "create_cgl", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for creating central general ledger.');
         }
-        $result = pg_execute($this->connection, "create_cgl", [$gl_account, $CompanyId]);
+        $result = pg_execute($this->connection, "create_cgl", [$gl_account, $CompanyId, $UserId]);
         if (!$result) {
             throw new Exception('Failed to execute SQL query for creating central general ledger.');
         }

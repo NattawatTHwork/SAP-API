@@ -32,6 +32,7 @@ class GLInterestBankCreations
                       account_number,
                       interest_indicator,
                       interest_calculation_frequency,
+                      last_interest_calculation_date_key,
                       last_interest_calculation_date
                   FROM cm_sap.tb_gl_interest_bank_creations
                   WHERE is_deleted = false AND central_general_ledger_id = $1';
@@ -59,9 +60,9 @@ class GLInterestBankCreations
                 central_general_ledger_id, field_status_group, automatic_posting_only, 
                 automatic_incremental_posting, reconciliation_account_input, planning_level,
                 cash_flow_related, commitment_item, correspondent_bank, account_number,
-                interest_indicator, interest_calculation_frequency, last_interest_calculation_date,
+                interest_indicator, interest_calculation_frequency, last_interest_calculation_date_key, last_interest_calculation_date,
                 created_at, updated_at, is_deleted
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW(), false) RETURNING gl_interest_bank_creation_id';
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW(), false) RETURNING gl_interest_bank_creation_id';
         $result = pg_prepare($this->connection, "create_gl_interest_bank_creation", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for creating GL Interest Bank Creation.');
@@ -69,7 +70,7 @@ class GLInterestBankCreations
         $result = pg_execute(
             $this->connection,
             "create_gl_interest_bank_creation",
-            array($centralGeneralLedgerId, '', 'false', 'false', 'false', '', 'false', '', '', '', '', '', '')
+            array($centralGeneralLedgerId, '', 'false', 'false', 'false', '', 'false', '', '', '', '', '', '', '')
         );
         if (!$result) {
             throw new Exception('Failed to execute SQL query for creating GL Interest Bank Creation.');
@@ -91,6 +92,7 @@ class GLInterestBankCreations
         $account_number,
         $interest_indicator,
         $interest_calculation_frequency,
+        $last_interest_calculation_date_key,
         $last_interest_calculation_date
     ) {
         $glInterestBankCreationId = $this->encryption->decrypt($encryptedGLInterestBankCreationId);
@@ -99,7 +101,7 @@ class GLInterestBankCreations
                   SET field_status_group = $2, automatic_posting_only = $3, automatic_incremental_posting = $4, 
                       reconciliation_account_input = $5, planning_level = $6, cash_flow_related = $7, 
                       commitment_item = $8, correspondent_bank = $9, account_number = $10, 
-                      interest_indicator = $11, interest_calculation_frequency = $12, last_interest_calculation_date = $13, updated_at = NOW()
+                      interest_indicator = $11, interest_calculation_frequency = $12, last_interest_calculation_date_key = $13, last_interest_calculation_date = $14, updated_at = NOW()
                   WHERE gl_interest_bank_creation_id = $1 AND is_deleted = false';
         $result = pg_prepare($this->connection, "update_gl_interest_bank_creation", $query);
         if (!$result) {
@@ -111,7 +113,7 @@ class GLInterestBankCreations
             array($glInterestBankCreationId, $field_status_group, $automatic_posting_only, 
                   $automatic_incremental_posting, $reconciliation_account_input, $planning_level, $cash_flow_related,
                   $commitment_item, $correspondent_bank, $account_number, $interest_indicator, 
-                  $interest_calculation_frequency, $last_interest_calculation_date)
+                  $interest_calculation_frequency, $last_interest_calculation_date_key, $last_interest_calculation_date)
         );
         if (!$result) {
             throw new Exception('Failed to execute SQL query for updating GL Interest Bank Creation.');

@@ -7,6 +7,7 @@ include_once '../class/central_general_ledgers.php';
 include_once '../class/gl_types.php'; // เพิ่มการนำเข้าของ GLTypes
 include_once '../class/gl_control_datas.php';
 include_once '../class/gl_interest_bank_creations.php'; // เพิ่มการนำเข้าของ GLInterestBankCreations
+include_once '../class/gl_ca_datas.php'; // เพิ่มการนำเข้าของ GLCAData
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -24,10 +25,11 @@ try {
         if (empty($missing_fields)) {
             $gl_account = trim($data['gl_account']);
             $company_id = trim($data['company_id']);
+            $user_id = trim($data['user_id']);
 
             // สร้าง Central General Ledger
             $centralGeneralLedgers = new CentralGeneralLedgers();
-            $centralGeneralLedgerId = $centralGeneralLedgers->createCentralGeneralLedger($gl_account, $company_id);
+            $centralGeneralLedgerId = $centralGeneralLedgers->createCentralGeneralLedger($gl_account, $company_id, $user_id);
 
             if ($centralGeneralLedgerId) {
                 // ใช้ ID ที่ได้รับเพื่อสร้าง GL Type
@@ -45,15 +47,24 @@ try {
                         $glInterestBankCreationId = $glInterestBankCreations->createGLInterestBankCreation($centralGeneralLedgerId);
 
                         if ($glInterestBankCreationId) {
-                            http_response_code(201);
-                            echo json_encode([
-                                "status" => "success",
-                                "message" => "Central General Ledger, GL Type, Control Data, and GL Interest Bank Creation created successfully",
-                                "central_general_ledger_id" => $centralGeneralLedgerId,
-                                "gl_type_id" => $glTypeId,
-                                "control_data_id" => $controlDataId,
-                                "gl_interest_bank_creation_id" => $glInterestBankCreationId
-                            ]);
+                            // สร้าง GL CA Data
+                            $glCAData = new GLCAData(); // สร้าง instance ของ GLCAData
+                            $glCADataId = $glCAData->createGLCAData($centralGeneralLedgerId);
+
+                            if ($glCADataId) {
+                                http_response_code(201);
+                                echo json_encode([
+                                    "status" => "success",
+                                    "message" => "Central General Ledger, GL Type, Control Data, GL Interest Bank Creation, and GL CA Data created successfully",
+                                    "central_general_ledger_id" => $centralGeneralLedgerId,
+                                    "gl_type_id" => $glTypeId,
+                                    "control_data_id" => $controlDataId,
+                                    "gl_interest_bank_creation_id" => $glInterestBankCreationId,
+                                    "gl_ca_data_id" => $glCADataId
+                                ]);
+                            } else {
+                                throw new Exception("Error creating GL CA Data.");
+                            }
                         } else {
                             throw new Exception("Error creating GL Interest Bank Creation.");
                         }

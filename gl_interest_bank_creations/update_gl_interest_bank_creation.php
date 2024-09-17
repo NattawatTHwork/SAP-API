@@ -31,6 +31,7 @@ try {
             $account_number = isset($data['account_number']) ? trim($data['account_number']) : '';
             $interest_indicator = isset($data['interest_indicator']) ? trim($data['interest_indicator']) : '';
             $interest_calculation_frequency = isset($data['interest_calculation_frequency']) ? trim($data['interest_calculation_frequency']) : '';
+            $last_interest_calculation_date_key = isset($data['last_interest_calculation_date_key']) ? trim($data['last_interest_calculation_date_key']) : '';
             $last_interest_calculation_date = isset($data['last_interest_calculation_date']) ? trim($data['last_interest_calculation_date']) : '';
 
             $glInterestBankCreations = new GLInterestBankCreations();
@@ -47,6 +48,7 @@ try {
                 $account_number,
                 $interest_indicator,
                 $interest_calculation_frequency,
+                $last_interest_calculation_date_key,
                 $last_interest_calculation_date
             );
 
