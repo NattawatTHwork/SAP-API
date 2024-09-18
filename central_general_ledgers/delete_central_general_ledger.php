@@ -50,11 +50,11 @@ try {
                             $resultGLCAData = $glCAData->deleteGLCAData($centralGeneralLedgerId);
 
                             if ($resultGLCAData > 0) {
-                                http_response_code(200);
-                                echo json_encode([
-                                    "status" => "success",
-                                    "message" => "Central General Ledger, associated GL Types, Control Data, GL Interest Bank Creation, and GL CA Data deleted successfully"
-                                ]);
+                                    http_response_code(200);
+                                    echo json_encode([
+                                        "status" => "success",
+                                        "message" => "Central General Ledger, associated GL Types, Control Data, GL Interest Bank Creation and GL CA Data deleted successfully"
+                                    ]);
                             } else {
                                 throw new Exception("Error deleting GL CA Data associated with Central General Ledger.");
                             }

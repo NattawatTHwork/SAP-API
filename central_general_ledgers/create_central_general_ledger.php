@@ -52,16 +52,16 @@ try {
                             $glCADataId = $glCAData->createGLCAData($centralGeneralLedgerId);
 
                             if ($glCADataId) {
-                                http_response_code(201);
-                                echo json_encode([
-                                    "status" => "success",
-                                    "message" => "Central General Ledger, GL Type, Control Data, GL Interest Bank Creation, and GL CA Data created successfully",
-                                    "central_general_ledger_id" => $centralGeneralLedgerId,
-                                    "gl_type_id" => $glTypeId,
-                                    "control_data_id" => $controlDataId,
-                                    "gl_interest_bank_creation_id" => $glInterestBankCreationId,
-                                    "gl_ca_data_id" => $glCADataId
-                                ]);
+                                    http_response_code(201);
+                                    echo json_encode([
+                                        "status" => "success",
+                                        "message" => "Central General Ledger, GL Type, Control Data, GL Interest Bank Creation and GL CA Data created successfully",
+                                        "central_general_ledger_id" => $centralGeneralLedgerId,
+                                        "gl_type_id" => $glTypeId,
+                                        "control_data_id" => $controlDataId,
+                                        "gl_interest_bank_creation_id" => $glInterestBankCreationId,
+                                        "gl_ca_data_id" => $glCADataId
+                                    ]);
                             } else {
                                 throw new Exception("Error creating GL CA Data.");
                             }

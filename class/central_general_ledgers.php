@@ -17,10 +17,14 @@ class CentralGeneralLedgers
 
     public function getAllCentralGeneralLedgers()
     {
-        $query = 'SELECT central_general_ledger_id, gl_account, tb_central_general_ledgers.company_id, company_code, tb_central_general_ledgers.created_at, username
+        $query = 'SELECT tb_central_general_ledgers.central_general_ledger_id, gl_account, tb_central_general_ledgers.company_id, company_code, tb_central_general_ledgers.created_at, username
                   FROM cm_sap.tb_central_general_ledgers 
                   INNER JOIN cm_sap.tb_companies ON tb_central_general_ledgers.company_id = tb_companies.company_id
                   INNER JOIN cm_sap.tb_users ON tb_central_general_ledgers.user_create = tb_users.user_id
+                  INNER JOIN cm_sap.tb_gl_types ON tb_central_general_ledgers.central_general_ledger_id = tb_gl_types.central_general_ledger_id
+                  INNER JOIN cm_sap.tb_gl_control_datas ON tb_central_general_ledgers.central_general_ledger_id = tb_gl_control_datas.central_general_ledger_id
+                  INNER JOIN cm_sap.tb_gl_interest_bank_creations ON tb_central_general_ledgers.central_general_ledger_id = tb_gl_interest_bank_creations.central_general_ledger_id
+                  INNER JOIN cm_sap.tb_gl_ca_datas ON tb_central_general_ledgers.central_general_ledger_id = tb_gl_ca_datas.central_general_ledger_id
                   WHERE tb_central_general_ledgers.is_deleted = false 
                   ORDER BY tb_central_general_ledgers.created_at ASC';
         $result = pg_prepare($this->connection, "get_all_cgl", $query);
