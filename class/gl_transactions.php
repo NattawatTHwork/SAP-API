@@ -15,9 +15,8 @@ class GLTransactions
         $this->encryption = new Encryption();
     }
 
-    public function getGLTransactionAll($encryptedGeneralLedgerId)
+    public function getGLTransactionAll()
     {
-        $GeneralLedgerId = $this->encryption->decrypt($encryptedGeneralLedgerId);
         $query = 'SELECT 
                       gl_transaction_id, 
                       tb_gl_transactions.central_general_ledger_id, 
@@ -32,13 +31,13 @@ class GLTransactions
                       gl_account
                   FROM cm_sap.tb_gl_transactions 
                   INNER JOIN cm_sap.tb_central_general_ledgers ON tb_central_general_ledgers.central_general_ledger_id = tb_gl_transactions.central_general_ledger_id
-                  WHERE tb_gl_transactions.is_deleted = false AND general_ledger_id = $1
+                  WHERE tb_gl_transactions.is_deleted = false
                   ORDER BY tb_gl_transactions.created_at ASC';
         $result = pg_prepare($this->connection, "get_all_gl_transactions", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for getting all GL transactions.');
         }
-        $result = pg_execute($this->connection, "get_all_gl_transactions", [$GeneralLedgerId]);
+        $result = pg_execute($this->connection, "get_all_gl_transactions", []);
         if (!$result) {
             throw new Exception('Failed to execute SQL query for getting all GL transactions.');
         }
