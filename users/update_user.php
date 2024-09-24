@@ -9,7 +9,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
 
-        $required_fields = ['user_id', 'firstname', 'lastname', 'role_id', 'statusflag'];
+        $required_fields = ['user_id', 'firstname', 'lastname', 'sysid', 'statusflag'];
         $missing_fields = [];
 
         foreach ($required_fields as $field) {
@@ -22,11 +22,11 @@ try {
             $user_id = trim($data['user_id']);
             $firstname = trim($data['firstname']);
             $lastname = trim($data['lastname']);
-            $role_id = trim($data['role_id']);
             $statusflag = trim($data['statusflag']);
+            $sysid = trim($data['sysid']);
 
             $users = new Users();
-            $result = $users->updateUser($user_id, $firstname, $lastname, $role_id, $statusflag);
+            $result = $users->updateUser($user_id, $firstname, $lastname, $statusflag, $sysid);
 
             if ($result) {
                 http_response_code(200);

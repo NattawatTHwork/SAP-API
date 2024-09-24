@@ -9,7 +9,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
 
-        $required_fields = ['username', 'user_password', 'firstname', 'lastname', 'role_id'];
+        $required_fields = ['username', 'user_password', 'firstname', 'lastname', 'sysid'];
         $missing_fields = [];
 
         foreach ($required_fields as $field) {
@@ -23,10 +23,10 @@ try {
             $password = trim($data['user_password']);
             $firstname = trim($data['firstname']);
             $lastname = trim($data['lastname']);
-            $role_id = trim($data['role_id']);
+            $sysid = trim($data['sysid']);
 
             $users = new Users();
-            $result = $users->createUser($username, password_hash($password, PASSWORD_DEFAULT), $firstname, $lastname, $role_id);
+            $result = $users->createUser($username, password_hash($password, PASSWORD_DEFAULT), $firstname, $lastname, $sysid);
 
             if ($result === 'Username already exists') {
                 http_response_code(409);  // Conflict

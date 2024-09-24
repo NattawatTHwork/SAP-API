@@ -15,38 +15,37 @@ class Users
         $this->encryption = new Encryption(); // สร้างออบเจกต์ Encryption
     }
 
-    public function getUserAll()
+    public function getUserAll($sysid)
     {
-        $query = 'SELECT user_id, username, firstname, lastname, tb_roles.role_id, role, tb_users.statusflag
-        FROM cm_sap.tb_users INNER JOIN cm_sap.tb_roles ON tb_users.role_id = tb_roles.role_id WHERE tb_users.is_deleted = false';
+        $query = "SELECT user_id, username, firstname, lastname, statusflag, sysid
+                  FROM cm_sap.tb_users 
+                  WHERE is_deleted = false 
+                  AND sysid IS NOT NULL 
+                  AND LENGTH(sysid) > 0 AND (sysid = $1 OR sysid LIKE $1 || ',%' OR sysid LIKE '%,' || $1 || ',%' OR sysid LIKE '%,' || $1)";
         $result = pg_prepare($this->connection, "get_all_users", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for fetching all users.');
         }
-        $result = pg_execute($this->connection, "get_all_users", []);
+        $result = pg_execute($this->connection, "get_all_users", [$sysid]);
         if (!$result) {
             throw new Exception('Failed to execute SQL query for fetching all users.');
         }
-
         $users = pg_fetch_all($result);
         if ($users === false) {
             return [];
         }
-
         foreach ($users as &$user) {
             $user['user_id'] = $this->encryption->encrypt($user['user_id']);
         }
-
         return $users;
     }
-
+    
     public function getUserById($encryptedUserId)
     {
         $userId = $this->encryption->decrypt($encryptedUserId);
-        $query = 'SELECT user_id, username, firstname, lastname, tb_roles.role_id, role, tb_users.statusflag
+        $query = 'SELECT user_id, username, firstname, lastname, statusflag, sysid
                   FROM cm_sap.tb_users 
-                  INNER JOIN cm_sap.tb_roles ON tb_users.role_id = tb_roles.role_id 
-                  WHERE user_id = $1 AND tb_users.is_deleted = false';
+                  WHERE user_id = $1 AND is_deleted = false';
         $result = pg_prepare($this->connection, "get_user_by_id", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for fetching user by ID.');
@@ -64,18 +63,18 @@ class Users
         return $user;
     }
 
-    public function createUser($username, $userPassword, $firstname, $lastname, $role_id)
+    public function createUser($username, $userPassword, $firstname, $lastname, $sysid)
     {
         if ($this->usernameExists($username)) {
             return 'Username already exists';
         }
-        $query = 'INSERT INTO cm_sap.tb_users (username, user_password, firstname, lastname, role_id, created_at, updated_at, statusflag, is_deleted) 
+        $query = 'INSERT INTO cm_sap.tb_users (username, user_password, firstname, lastname, sysid, created_at, updated_at, statusflag, is_deleted) 
               VALUES ($1, $2, $3, $4, $5, NOW(), NOW(), true, false) RETURNING user_id';
         $result = pg_prepare($this->connection, "create_user", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for creating user.');
         }
-        $result = pg_execute($this->connection, "create_user", array($username, $userPassword, $firstname, $lastname, $role_id));
+        $result = pg_execute($this->connection, "create_user", array($username, $userPassword, $firstname, $lastname, $sysid));
         if (!$result) {
             throw new Exception('Failed to execute SQL query for creating user.');
         }
@@ -98,18 +97,18 @@ class Users
         return $count > 0;
     }
 
-    public function updateUser($encryptedUserId, $firstname, $lastname, $role_id, $statusflag)
+    public function updateUser($encryptedUserId, $firstname, $lastname, $statusflag, $sysid)
     {
         $userId = $this->encryption->decrypt($encryptedUserId);
 
         $query = 'UPDATE cm_sap.tb_users 
-                  SET firstname = $2, lastname = $3, role_id = $4, statusflag = $5, updated_at = NOW() 
+                  SET firstname = $2, lastname = $3, statusflag = $4, sysid = $5, updated_at = NOW() 
                   WHERE user_id = $1 AND is_deleted = false';
         $result = pg_prepare($this->connection, "update_user", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for updating user.');
         }
-        $result = pg_execute($this->connection, "update_user", array($userId, $firstname, $lastname, $role_id, $statusflag));
+        $result = pg_execute($this->connection, "update_user", array($userId, $firstname, $lastname, $statusflag, $sysid));
         if (!$result) {
             throw new Exception('Failed to execute SQL query for updating user.');
         }
@@ -150,45 +149,48 @@ class Users
         return pg_affected_rows($result);
     }
 
-    public function login($username, $password)
+    public function login($username, $password, $sysid)
     {
-        $query = 'SELECT user_id, username, user_password, statusflag, is_deleted, role_id FROM cm_sap.tb_users WHERE username = $1';
+        $query = 'SELECT user_id, username, user_password, statusflag, is_deleted, sysid FROM cm_sap.tb_users WHERE username = $1';
         $result = pg_prepare($this->connection, "login_user", $query);
+
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for user login.');
         }
+
         $result = pg_execute($this->connection, "login_user", array($username));
         if (!$result) {
             throw new Exception('Failed to execute SQL query for user login.');
         }
+
         $user = pg_fetch_assoc($result);
 
         if (!$user) {
-            // Username does not exist
-            return array('status' => 'error', 'message' => 'Username does not exist.');
+            return array('status' => 'exist', 'message' => 'Username does not exist.');
         }
 
         if ($user['is_deleted'] === 't') {
-            // User account is deleted
-            return array('status' => 'error', 'message' => 'Account is deactivated.');
+            return array('status' => 'deactivated', 'message' => 'Account is deactivated.');
         }
 
         if ($user['statusflag'] === 'f') {
-            // User account is not active
-            return array('status' => 'error', 'message' => 'Account is inactive.');
+            return array('status' => 'inactive', 'message' => 'Account is inactive.');
         }
 
         if (!password_verify($password, $user['user_password'])) {
-            // Incorrect password
-            return array('status' => 'error', 'message' => 'Incorrect password.');
+            return array('status' => 'incorrect', 'message' => 'Incorrect password.');
         }
 
-        // Successful login
+        $sysid_list = explode(',', $user['sysid']);
+        if (!in_array($sysid, $sysid_list)) {
+            return array('status' => 'invalid_sysid', 'message' => 'Invalid sysid provided.');
+        }
+
         return array(
             'status' => 'success',
             'user_id' => $this->encryption->encrypt($user['user_id']),
             'username' => $user['username'],
-            'role' => $user['role_id']
+            'sysid' => $sysid
         );
     }
 }

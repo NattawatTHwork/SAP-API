@@ -10,7 +10,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
 
-        $required_fields = ['username', 'password'];
+        $required_fields = ['username', 'password', 'sysid'];
         $missing_fields = [];
 
         foreach ($required_fields as $field) {
@@ -22,23 +22,19 @@ try {
         if (empty($missing_fields)) {
             $username = trim($data['username']);
             $password = trim($data['password']);
+            $sysid = trim($data['sysid']);
 
             $users = new Users();
             
             // Attempt login
-            $loginResult = $users->login($username, $password);
+            $loginResult = $users->login($username, $password, $sysid);
 
             if ($loginResult['status'] === 'success') {
-                $role_menus = new RoleMenus();
-                $role_menus_raw = $role_menus->getRoleMenu($loginResult['role']);
-                $menuList = array_column($role_menus_raw, 'menu_id');
-                $menuList = array_map('strval', $menuList);
-
                 $tokenClass = new Token();
                 $token = $tokenClass->generateToken([
                     'user_id' => $loginResult['user_id'],
                     'username' => $loginResult['username'],
-                    'allowed_menu' => $menuList
+                    'sysid' => $loginResult['sysid']
                 ]);
 
                 http_response_code(200);
@@ -49,7 +45,7 @@ try {
                 ));
             } else {
                 http_response_code(401); // Unauthorized
-                echo json_encode(array("status" => "error", "message" => $loginResult['message']));
+                echo json_encode(array("status" => $loginResult['status'], "message" => $loginResult['message']));
             }
         } else {
             http_response_code(400); // Bad Request
