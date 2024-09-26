@@ -3,45 +3,48 @@ include_once '../include/header.php';
 include_once '../vendor/firebase/php-jwt/src/JWT.php';
 include_once '../vendor/firebase/php-jwt/src/Key.php';
 include_once '../auth/authorization.php';
-include_once '../class/users.php';
+include_once '../class/roles.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // Decode the incoming JSON request
         $data = json_decode(file_get_contents('php://input'), true);
 
-        $required_fields = ['user_id', 'firstname', 'lastname', 'role_id', 'statusflag'];
+        // Required field for deleting a role
+        $required_fields = ['role_id'];
         $missing_fields = [];
 
+        // Check for missing required fields
         foreach ($required_fields as $field) {
             if (!isset($data[$field]) || trim($data[$field]) === '') {
                 $missing_fields[] = $field;
             }
         }
 
+        // Proceed if there are no missing fields
         if (empty($missing_fields)) {
-            $user_id = trim($data['user_id']);
-            $firstname = trim($data['firstname']);
-            $lastname = trim($data['lastname']);
-            $role_id = trim($data['role_id']);
-            $statusflag = trim($data['statusflag']);
+            // Instantiate the Roles class and delete the role by role_id
+            $roles = new Roles();
+            $result = $roles->deleteRole(trim($data['role_id']));
 
-            $users = new Users();
-            $result = $users->updateUser($user_id, $firstname, $lastname, $role_id, $statusflag);
-
+            // Check if deletion was successful
             if ($result) {
                 http_response_code(200);
-                echo json_encode(array("status" => "success", "message" => "User updated successfully"));
+                echo json_encode(["status" => "success", "message" => "Role deleted successfully"]);
             } else {
-                throw new Exception("Error updating user.");
+                throw new Exception("Error deleting role.");
             }
         } else {
+            // Throw an error if required fields are missing
             throw new Exception("Missing required fields: " . implode(', ', $missing_fields));
         }
     } else {
+        // Handle invalid request method
         throw new Exception("Method not allowed.");
     }
 } catch (Exception $e) {
+    // Handle exceptions
     http_response_code(400);
-    echo json_encode(array("status" => "error", "message" => $e->getMessage()));
+    echo json_encode(["status" => "error", "message" => $e->getMessage()]);
 }
 ?>

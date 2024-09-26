@@ -29,13 +29,16 @@ try {
             $loginResult = $users->login($username, $password);
 
             if ($loginResult['status'] === 'success') {
+                $role_menus = new RoleMenus();
+                $role_menus_raw = $role_menus->getRoleMenu($loginResult['role']);
+                $menuList = array_column($role_menus_raw, 'menu_id');
+                $menuList = array_map('strval', $menuList);
+
                 $tokenClass = new Token();
                 $token = $tokenClass->generateToken([
                     'user_id' => $loginResult['user_id'],
                     'username' => $loginResult['username'],
-                    'firstname' => $loginResult['firstname'],
-                    'lastname' => $loginResult['lastname'],
-                    'statusflag' => $loginResult['statusflag'],
+                    'allowed_menu' => $menuList
                 ]);
 
                 http_response_code(200);

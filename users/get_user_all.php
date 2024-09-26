@@ -7,15 +7,8 @@ include_once '../class/users.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        if (!isset($_GET['sysid'])) {
-            http_response_code(400);
-            echo json_encode(["status" => "error", "message" => "System ID is required."]);
-            exit;
-        }
-        $sysid = $_GET['sysid'];
-
         $users = new Users();
-        $userList = $users->getUserAll($sysid);
+        $userList = $users->getUserAll();
 
         if ($userList !== false) {
             http_response_code(200);

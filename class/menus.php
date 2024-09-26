@@ -14,7 +14,7 @@ class Menus
 
     public function getMenuAll()
     {
-        $query = 'SELECT menu_id FROM cm_sap.tb_menus WHERE is_deleted = false';
+        $query = 'SELECT menu_id, menu_th, menu_en FROM cm_sap.tb_menus WHERE is_deleted = false ORDER BY menu_id ASC';
         $result = pg_prepare($this->connection, "get_all_menus", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for getting all menus.');

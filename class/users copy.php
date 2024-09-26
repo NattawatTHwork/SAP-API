@@ -152,7 +152,7 @@ class Users
 
     public function login($username, $password)
     {
-        $query = 'SELECT user_id, username, user_password, statusflag, is_deleted, firstname, lastname, statusflag FROM cm_sap.tb_users WHERE username = $1';
+        $query = 'SELECT user_id, username, user_password, statusflag, is_deleted, role_id FROM cm_sap.tb_users WHERE username = $1';
         $result = pg_prepare($this->connection, "login_user", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for user login.');
@@ -186,11 +186,9 @@ class Users
         // Successful login
         return array(
             'status' => 'success',
-            'user_id' => $user['user_id'],
+            'user_id' => $this->encryption->encrypt($user['user_id']),
             'username' => $user['username'],
-            'firstname' => $user['firstname'],
-            'lastname' => $user['lastname'],
-            'statusflag' => $user['statusflag']
+            'role' => $user['role_id']
         );
     }
 }
