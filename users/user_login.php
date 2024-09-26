@@ -38,11 +38,20 @@ try {
                     'statusflag' => $loginResult['statusflag'],
                 ]);
 
+                $data = [
+                    'user_id' => $loginResult['user_id'],
+                    'username' => $loginResult['username'],
+                    'firstname' => $loginResult['firstname'],
+                    'lastname' => $loginResult['lastname'],
+                    'statusflag' => $loginResult['statusflag'],
+                ];
+
                 http_response_code(200);
                 echo json_encode(array(
                     "status" => "success",
                     "message" => "Login successful",
-                    "token" => $token
+                    "token" => $token,
+                    "data" => $data
                 ));
             } else {
                 http_response_code(401); // Unauthorized
