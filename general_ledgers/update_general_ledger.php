@@ -34,6 +34,10 @@ try {
             $intercompany_number = isset($data['intercompany_number']) ? trim($data['intercompany_number']) : '';
             $branch_number = isset($data['branch_number']) ? trim($data['branch_number']) : '';
             $currency = isset($data['currency']) ? trim($data['currency']) : '';
+            $exchange_rate = isset($data['exchange_rate']) ? trim($data['exchange_rate']) : '';
+            $translatn_date = validateDate($data['translatn_date']) ? $data['translatn_date'] : null;
+            $trading_part_ba = isset($data['trading_part_ba']) ? trim($data['trading_part_ba']) : '';
+            $calculate_tax = isset($data['calculate_tax']) ? trim($data['calculate_tax']) : 'false';
 
             $generalLedgers = new GeneralLedgers();
             $affectedRows = $generalLedgers->updateGeneralLedger(
@@ -45,7 +49,11 @@ try {
                 $document_type,
                 $intercompany_number,
                 $branch_number,
-                $currency
+                $currency,
+                $exchange_rate,
+                $translatn_date,
+                $trading_part_ba,
+                $calculate_tax
             );
 
             if ($affectedRows > 0) {

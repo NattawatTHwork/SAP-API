@@ -4,7 +4,6 @@ include_once '../vendor/firebase/php-jwt/src/JWT.php';
 include_once '../vendor/firebase/php-jwt/src/Key.php';
 include_once '../auth/authorization.php';
 include_once '../class/general_ledgers.php'; // นำเข้า class GeneralLedgers
-include_once '../class/general_ledger_details.php'; // นำเข้า class GeneralLedgerDetails
 
 function validateDate($date, $format = 'Y-m-d')
 {
@@ -37,6 +36,10 @@ try {
             $intercompany_number = isset($data['intercompany_number']) ? trim($data['intercompany_number']) : '';
             $branch_number = isset($data['branch_number']) ? trim($data['branch_number']) : '';
             $currency = isset($data['currency']) ? trim($data['currency']) : '';
+            $exchange_rate = isset($data['exchange_rate']) ? trim($data['exchange_rate']) : '';
+            $translatn_date = validateDate($data['translatn_date']) ? $data['translatn_date'] : null;
+            $trading_part_ba = isset($data['trading_part_ba']) ? trim($data['trading_part_ba']) : '';
+            $calculate_tax = isset($data['calculate_tax']) ? trim($data['calculate_tax']) : 'false';
 
             // สร้าง General Ledger
             $generalLedgers = new GeneralLedgers();
@@ -49,25 +52,20 @@ try {
                 $document_type,
                 $intercompany_number,
                 $branch_number,
-                $currency
+                $currency,
+                $exchange_rate,
+                $translatn_date,
+                $trading_part_ba,
+                $calculate_tax
             );
 
             if ($generalLedgerId) {
-                // เรียกใช้ createGeneralLedgerDetail หลังจากสร้าง General Ledger สำเร็จ
-                $generalLedgerDetails = new GeneralLedgerDetails();
-                $generalLedgerDetailId = $generalLedgerDetails->createGeneralLedgerDetail($generalLedgerId, $company_id);
-
-                if ($generalLedgerDetailId) {
-                    http_response_code(201);
-                    echo json_encode([
-                        "status" => "success",
-                        "message" => "General Ledger and Detail created successfully",
-                        "general_ledger_id" => $generalLedgerId,
-                        "general_ledger_detail_id" => $generalLedgerDetailId
-                    ]);
-                } else {
-                    throw new Exception("Error creating General Ledger Detail.");
-                }
+                http_response_code(201);
+                echo json_encode([
+                    "status" => "success",
+                    "message" => "General Ledger created successfully",
+                    "general_ledger_id" => $generalLedgerId
+                ]);
             } else {
                 throw new Exception("Error creating General Ledger.");
             }

@@ -3,8 +3,7 @@ include_once '../include/header.php';
 include_once '../vendor/firebase/php-jwt/src/JWT.php';
 include_once '../vendor/firebase/php-jwt/src/Key.php';
 include_once '../auth/authorization.php';
-include_once '../class/general_ledgers.php'; 
-include_once '../class/general_ledger_details.php'; // Import GeneralLedgerDetails class
+include_once '../class/general_ledgers.php'; // Import GeneralLedgers class
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -21,19 +20,17 @@ try {
         }
 
         if (empty($missing_fields)) {
-            // สร้าง instance ของ GeneralLedgers และ GeneralLedgerDetails class
+            // สร้าง instance ของ GeneralLedgers class
             $generalLedgers = new GeneralLedgers();
-            $generalLedgerDetails = new GeneralLedgerDetails();
             
-            // เรียกใช้ฟังก์ชัน deleteGeneralLedger และ deleteGeneralLedgerDetail
+            // เรียกใช้ฟังก์ชัน deleteGeneralLedger
             $ledgerResult = $generalLedgers->deleteGeneralLedger(trim($data['general_ledger_id']));
-            $detailResult = $generalLedgerDetails->deleteGeneralLedgerDetail(trim($data['general_ledger_id']));
 
-            if ($ledgerResult && $detailResult) {
+            if ($ledgerResult) {
                 http_response_code(200);
-                echo json_encode(["status" => "success", "message" => "General Ledger and its details deleted successfully"]);
+                echo json_encode(["status" => "success", "message" => "General Ledger deleted successfully"]);
             } else {
-                throw new Exception("Error deleting General Ledger or its details.");
+                throw new Exception("Error deleting General Ledger.");
             }
         } else {
             throw new Exception("Missing required fields: " . implode(', ', $missing_fields));
@@ -45,4 +42,3 @@ try {
     http_response_code(400);
     echo json_encode(["status" => "error", "message" => $e->getMessage()]);
 }
-?>

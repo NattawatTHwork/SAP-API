@@ -29,10 +29,13 @@ class GeneralLedgers
                       branch_number, 
                       currency,
                       company_code,
-                      name_th
+                      name_th,
+                      exchange_rate, 
+                      translatn_date, 
+                      trading_part_ba, 
+                      calculate_tax
                   FROM cm_sap.tb_general_ledgers 
                   INNER JOIN cm_sap.tb_companies ON tb_general_ledgers.company_id = tb_companies.company_id 
-                  INNER JOIN cm_sap.tb_general_ledger_details ON tb_general_ledger_details.general_ledger_id = tb_general_ledgers.general_ledger_id 
                   WHERE tb_general_ledgers.is_deleted = false 
                   ORDER BY tb_general_ledgers.created_at ASC';
         $result = pg_prepare($this->connection, "get_all_general_ledgers", $query);
@@ -69,7 +72,11 @@ class GeneralLedgers
                       branch_number, 
                       currency,
                       company_code,
-                      name_th 
+                      name_th, 
+                      exchange_rate, 
+                      translatn_date, 
+                      trading_part_ba, 
+                      calculate_tax
                   FROM cm_sap.tb_general_ledgers 
                   INNER JOIN cm_sap.tb_companies ON tb_general_ledgers.company_id = tb_companies.company_id
                   WHERE tb_general_ledgers.is_deleted = false AND general_ledger_id = $1 
@@ -100,28 +107,44 @@ class GeneralLedgers
         $document_type,
         $intercompany_number,
         $branch_number,
-        $currency
+        $currency,
+        $exchange_rate,
+        $translatn_date,
+        $trading_part_ba,
+        $calculate_tax
     ) {
         $companyId = $this->encryption->decrypt($company_id);
         $query = 'INSERT INTO cm_sap.tb_general_ledgers (
                     company_id, document_date, posting_date, reference, document_header_text, 
-                    document_type, intercompany_number, branch_number, currency, created_at, updated_at, is_deleted
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), false) 
+                    document_type, intercompany_number, branch_number, currency, exchange_rate, 
+                    translatn_date, trading_part_ba, calculate_tax, created_at, updated_at, is_deleted
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW(), false) 
                 RETURNING general_ledger_id';
         $result = pg_prepare($this->connection, "create_general_ledger", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for creating general ledger.');
         }
         $result = pg_execute($this->connection, "create_general_ledger", array(
-            $companyId, $document_date, $posting_date, $reference, $document_header_text, 
-            $document_type, $intercompany_number, $branch_number, $currency
+            $companyId,
+            $document_date,
+            $posting_date,
+            $reference,
+            $document_header_text,
+            $document_type,
+            $intercompany_number,
+            $branch_number,
+            $currency,
+            $exchange_rate,
+            $translatn_date,
+            $trading_part_ba,
+            $calculate_tax
         ));
         if (!$result) {
             throw new Exception('Failed to execute SQL query for creating general ledger.');
         }
         $generalLedgerId = pg_fetch_result($result, 0, 0);
         return $this->encryption->encrypt($generalLedgerId);
-    }
+    }    
 
     public function updateGeneralLedger(
         $encryptedGeneralLedgerId,
@@ -132,28 +155,45 @@ class GeneralLedgers
         $document_type,
         $intercompany_number,
         $branch_number,
-        $currency
+        $currency,
+        $exchange_rate,
+        $translatn_date,
+        $trading_part_ba,
+        $calculate_tax
     ) {
         $generalLedgerId = $this->encryption->decrypt($encryptedGeneralLedgerId);
         $query = 'UPDATE cm_sap.tb_general_ledgers 
                   SET document_date = $2, posting_date = $3, reference = $4, 
                       document_header_text = $5, document_type = $6, intercompany_number = $7, 
-                      branch_number = $8, currency = $9, updated_at = NOW() 
+                      branch_number = $8, currency = $9, exchange_rate = $10, 
+                      translatn_date = $11, trading_part_ba = $12, calculate_tax = $13, 
+                      updated_at = NOW() 
                   WHERE general_ledger_id = $1 AND is_deleted = false';
         $result = pg_prepare($this->connection, "update_general_ledger", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for updating general ledger.');
         }
         $result = pg_execute($this->connection, "update_general_ledger", array(
-            $generalLedgerId, $document_date, $posting_date, $reference, 
-            $document_header_text, $document_type, $intercompany_number, $branch_number, $currency
+            $generalLedgerId,
+            $document_date,
+            $posting_date,
+            $reference,
+            $document_header_text,
+            $document_type,
+            $intercompany_number,
+            $branch_number,
+            $currency,
+            $exchange_rate,
+            $translatn_date,
+            $trading_part_ba,
+            $calculate_tax
         ));
         if (!$result) {
             throw new Exception('Failed to execute SQL query for updating general ledger.');
         }
         return pg_affected_rows($result);
     }
-
+    
     public function deleteGeneralLedger($encryptedGeneralLedgerId)
     {
         $generalLedgerId = $this->encryption->decrypt($encryptedGeneralLedgerId);
@@ -171,4 +211,3 @@ class GeneralLedgers
         return pg_affected_rows($result);
     }
 }
-?>
