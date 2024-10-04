@@ -18,7 +18,7 @@ class Token
     public function generateToken($payload)
     {
         $issuedAt = time();
-        $expiration = $issuedAt + 84000; // Token valid for 1 hour
+        $expiration = $issuedAt + 604800; // Token valid for 7 days
 
         $tokenPayload = array_merge($payload, [
             'iat' => $issuedAt,

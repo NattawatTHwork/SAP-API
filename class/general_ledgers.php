@@ -18,7 +18,7 @@ class GeneralLedgers
     public function getAllGeneralLedgers()
     {
         $query = 'SELECT 
-                      general_ledger_id, 
+                      tb_general_ledgers.general_ledger_id, 
                       tb_general_ledgers.company_id, 
                       document_date, 
                       posting_date, 
@@ -31,7 +31,8 @@ class GeneralLedgers
                       company_code,
                       name_th
                   FROM cm_sap.tb_general_ledgers 
-                  INNER JOIN cm_sap.tb_companies ON tb_general_ledgers.company_id = tb_companies.company_id
+                  INNER JOIN cm_sap.tb_companies ON tb_general_ledgers.company_id = tb_companies.company_id 
+                  INNER JOIN cm_sap.tb_general_ledger_details ON tb_general_ledger_details.general_ledger_id = tb_general_ledgers.general_ledger_id 
                   WHERE tb_general_ledgers.is_deleted = false 
                   ORDER BY tb_general_ledgers.created_at ASC';
         $result = pg_prepare($this->connection, "get_all_general_ledgers", $query);

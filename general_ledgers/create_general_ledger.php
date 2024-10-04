@@ -4,6 +4,7 @@ include_once '../vendor/firebase/php-jwt/src/JWT.php';
 include_once '../vendor/firebase/php-jwt/src/Key.php';
 include_once '../auth/authorization.php';
 include_once '../class/general_ledgers.php'; // นำเข้า class GeneralLedgers
+include_once '../class/general_ledger_details.php'; // นำเข้า class GeneralLedgerDetails
 
 function validateDate($date, $format = 'Y-m-d')
 {
@@ -52,12 +53,21 @@ try {
             );
 
             if ($generalLedgerId) {
-                http_response_code(201);
-                echo json_encode([
-                    "status" => "success",
-                    "message" => "General Ledger created successfully",
-                    "general_ledger_id" => $generalLedgerId
-                ]);
+                // เรียกใช้ createGeneralLedgerDetail หลังจากสร้าง General Ledger สำเร็จ
+                $generalLedgerDetails = new GeneralLedgerDetails();
+                $generalLedgerDetailId = $generalLedgerDetails->createGeneralLedgerDetail($generalLedgerId, $company_id);
+
+                if ($generalLedgerDetailId) {
+                    http_response_code(201);
+                    echo json_encode([
+                        "status" => "success",
+                        "message" => "General Ledger and Detail created successfully",
+                        "general_ledger_id" => $generalLedgerId,
+                        "general_ledger_detail_id" => $generalLedgerDetailId
+                    ]);
+                } else {
+                    throw new Exception("Error creating General Ledger Detail.");
+                }
             } else {
                 throw new Exception("Error creating General Ledger.");
             }
