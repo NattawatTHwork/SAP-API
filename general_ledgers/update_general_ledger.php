@@ -15,7 +15,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
 
-        $required_fields = ['general_ledger_id'];
+        $required_fields = ['general_ledger_id', 'company_id'];
         $missing_fields = [];
 
         foreach ($required_fields as $field) {
@@ -26,12 +26,13 @@ try {
 
         if (empty($missing_fields)) {
             $general_ledger_id = trim($data['general_ledger_id']);
+            $updated_by = trim($data['updated_by']);
+            $company_id = trim($data['company_id']);
             $document_date = validateDate($data['document_date']) ? $data['document_date'] : date('Y-m-d');
             $posting_date = validateDate($data['posting_date']) ? $data['posting_date'] : null;
             $reference = isset($data['reference']) ? trim($data['reference']) : '';
             $document_header_text = isset($data['document_header_text']) ? trim($data['document_header_text']) : '';
             $document_type = isset($data['document_type']) ? trim($data['document_type']) : '';
-            $intercompany_number = isset($data['intercompany_number']) ? trim($data['intercompany_number']) : '';
             $branch_number = isset($data['branch_number']) ? trim($data['branch_number']) : '';
             $currency = isset($data['currency']) ? trim($data['currency']) : '';
             $exchange_rate = isset($data['exchange_rate']) ? trim($data['exchange_rate']) : '';
@@ -40,27 +41,33 @@ try {
             $calculate_tax = isset($data['calculate_tax']) ? trim($data['calculate_tax']) : 'false';
 
             $generalLedgers = new GeneralLedgers();
-            $affectedRows = $generalLedgers->updateGeneralLedger(
+            $generalLedgerId = $generalLedgers->updateGeneralLedger(
                 $general_ledger_id,
+                $company_id,
                 $document_date,
                 $posting_date,
                 $reference,
                 $document_header_text,
                 $document_type,
-                $intercompany_number,
                 $branch_number,
                 $currency,
                 $exchange_rate,
                 $translatn_date,
                 $trading_part_ba,
-                $calculate_tax
+                $calculate_tax,
+                $updated_by
             );
 
-            if ($affectedRows > 0) {
+            if ($generalLedgerId) {
                 http_response_code(200);
-                echo json_encode(["status" => "success", "message" => "General Ledger updated successfully"]);
+                echo json_encode([
+                    "status" => "success",
+                    "message" => "General Ledger updated successfully",
+                    "general_ledger_id" => $generalLedgerId
+                ]);
+                
             } else {
-                throw new Exception("Error updating General Ledger.");
+                throw new Exception("Error creating General Ledger.");
             }
         } else {
             throw new Exception("Missing required fields: " . implode(', ', $missing_fields));

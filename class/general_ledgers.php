@@ -25,7 +25,6 @@ class GeneralLedgers
                       reference, 
                       document_header_text, 
                       document_type, 
-                      intercompany_number, 
                       branch_number, 
                       currency,
                       company_code,
@@ -68,7 +67,6 @@ class GeneralLedgers
                       reference, 
                       document_header_text, 
                       document_type, 
-                      intercompany_number, 
                       branch_number, 
                       currency,
                       company_code,
@@ -99,13 +97,13 @@ class GeneralLedgers
     }
 
     public function createGeneralLedger(
+        $created_by,
         $company_id,
         $document_date,
         $posting_date,
         $reference,
         $document_header_text,
         $document_type,
-        $intercompany_number,
         $branch_number,
         $currency,
         $exchange_rate,
@@ -115,8 +113,8 @@ class GeneralLedgers
     ) {
         $companyId = $this->encryption->decrypt($company_id);
         $query = 'INSERT INTO cm_sap.tb_general_ledgers (
-                    company_id, document_date, posting_date, reference, document_header_text, 
-                    document_type, intercompany_number, branch_number, currency, exchange_rate, 
+                    created_by, company_id, document_date, posting_date, reference, document_header_text, 
+                    document_type, branch_number, currency, exchange_rate, 
                     translatn_date, trading_part_ba, calculate_tax, created_at, updated_at, is_deleted
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW(), false) 
                 RETURNING general_ledger_id';
@@ -125,13 +123,13 @@ class GeneralLedgers
             throw new Exception('Failed to prepare SQL query for creating general ledger.');
         }
         $result = pg_execute($this->connection, "create_general_ledger", array(
+            $created_by,
             $companyId,
             $document_date,
             $posting_date,
             $reference,
             $document_header_text,
             $document_type,
-            $intercompany_number,
             $branch_number,
             $currency,
             $exchange_rate,
@@ -148,25 +146,27 @@ class GeneralLedgers
 
     public function updateGeneralLedger(
         $encryptedGeneralLedgerId,
+        $encryptedcompanyId,
         $document_date,
         $posting_date,
         $reference,
         $document_header_text,
         $document_type,
-        $intercompany_number,
         $branch_number,
         $currency,
         $exchange_rate,
         $translatn_date,
         $trading_part_ba,
-        $calculate_tax
+        $calculate_tax,
+        $updated_by
     ) {
         $generalLedgerId = $this->encryption->decrypt($encryptedGeneralLedgerId);
+        $companyId = $this->encryption->decrypt($encryptedcompanyId);
         $query = 'UPDATE cm_sap.tb_general_ledgers 
-                  SET document_date = $2, posting_date = $3, reference = $4, 
-                      document_header_text = $5, document_type = $6, intercompany_number = $7, 
+                  SET company_id = $2, document_date = $3, posting_date = $4, reference = $5, 
+                      document_header_text = $6, document_type = $7, 
                       branch_number = $8, currency = $9, exchange_rate = $10, 
-                      translatn_date = $11, trading_part_ba = $12, calculate_tax = $13, 
+                      translatn_date = $11, trading_part_ba = $12, calculate_tax = $13, updated_by = $14,
                       updated_at = NOW() 
                   WHERE general_ledger_id = $1 AND is_deleted = false';
         $result = pg_prepare($this->connection, "update_general_ledger", $query);
@@ -175,23 +175,24 @@ class GeneralLedgers
         }
         $result = pg_execute($this->connection, "update_general_ledger", array(
             $generalLedgerId,
+            $companyId,
             $document_date,
             $posting_date,
             $reference,
             $document_header_text,
             $document_type,
-            $intercompany_number,
             $branch_number,
             $currency,
             $exchange_rate,
             $translatn_date,
             $trading_part_ba,
-            $calculate_tax
+            $calculate_tax,
+            $updated_by
         ));
         if (!$result) {
             throw new Exception('Failed to execute SQL query for updating general ledger.');
         }
-        return pg_affected_rows($result);
+        return $encryptedGeneralLedgerId;
     }
     
     public function deleteGeneralLedger($encryptedGeneralLedgerId)

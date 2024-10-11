@@ -2,6 +2,7 @@
 include_once '../connect/db_connect.php';
 include_once 'Encryption.php';
 
+
 class GLTransactions
 {
     private $db;
@@ -28,10 +29,13 @@ class GLTransactions
                       business_stablishment, 
                       tb_gl_transactions.business_type_id, 
                       determination, 
-                      description,
-                      gl_account
+                      tb_gl_transactions.description AS gl_description,
+                      gl_account,
+                      business_type_code, 
+                      tb_business_types.description AS bus_description
                   FROM cm_sap.tb_gl_transactions 
                   INNER JOIN cm_sap.tb_central_general_ledgers ON tb_central_general_ledgers.central_general_ledger_id = tb_gl_transactions.central_general_ledger_id
+                  INNER JOIN cm_sap.tb_business_types ON tb_gl_transactions.business_type_id = tb_business_types.business_type_id
                   WHERE tb_gl_transactions.is_deleted = false AND general_ledger_id = $1
                   ORDER BY tb_gl_transactions.created_at ASC';
         $result = pg_prepare($this->connection, "get_all_gl_transactions", $query);
@@ -50,7 +54,7 @@ class GLTransactions
             $transaction['gl_transaction_id'] = $this->encryption->encrypt($transaction['gl_transaction_id']);
             $transaction['central_general_ledger_id'] = $this->encryption->encrypt($transaction['central_general_ledger_id']);
             $transaction['general_ledger_id'] = $this->encryption->encrypt($transaction['general_ledger_id']);
-            $transaction['business_type_id'] = $this->encryption->encrypt($transaction['business_type_id']);
+            $transaction['business_type_id'] = ($this->encryption->encrypt($transaction['business_type_id']) === 'Ny9TclFPb0NxNmtmOWlMUUlMS2c3dz09') ? '' : $this->encryption->encrypt($transaction['business_type_id']);
         }
         return $glTransactions;
     }
@@ -68,13 +72,16 @@ class GLTransactions
                       business_stablishment, 
                       tb_gl_transactions.business_type_id, 
                       determination, 
-                      description,
+                      tb_gl_transactions.description AS gl_description,
                       gl_account,
                       company_code, 
-                      name_th
+                      name_th,
+                      business_type_code, 
+                      tb_business_types.description AS bus_description
                   FROM cm_sap.tb_gl_transactions 
                   INNER JOIN cm_sap.tb_central_general_ledgers ON tb_central_general_ledgers.central_general_ledger_id = tb_gl_transactions.central_general_ledger_id
                   INNER JOIN cm_sap.tb_companies ON tb_central_general_ledgers.company_id = tb_companies.company_id
+                  INNER JOIN cm_sap.tb_business_types ON tb_gl_transactions.business_type_id = tb_business_types.business_type_id
                   WHERE tb_gl_transactions.is_deleted = false AND tb_gl_transactions.gl_transaction_id = $1
                   ORDER BY tb_gl_transactions.created_at ASC';
         $result = pg_prepare($this->connection, "get_gl_transaction_by_id", $query);
@@ -96,71 +103,57 @@ class GLTransactions
         return $transaction;
     }
 
-    public function createGLTransaction(
-        $central_general_ledger_id,
+    public function createGLTransactions(
         $general_ledger_id,
-        $calculate_tax,
-        $dc_type,
-        $amount,
-        $business_stablishment,
-        $business_type_id,
-        $determination,
-        $description
+        $transactions
     ) {
-        $centralGeneralLedgerId = $this->encryption->decrypt($central_general_ledger_id);
         $generalLedgerId = $this->encryption->decrypt($general_ledger_id);
-        $businessTypeId = $this->encryption->decrypt($business_type_id);
 
-        $query = 'INSERT INTO cm_sap.tb_gl_transactions (
+        $placeholders = [];
+        $values = [];
+
+        foreach ($transactions as $index => $transaction) {
+            $centralGeneralLedgerId = $this->encryption->decrypt($transaction['central_general_ledger_id']);
+            $calculate_tax = $transaction['calculate_tax'];
+            $dc_type = $transaction['dc_type'];
+            $amount = $transaction['amount'];
+            $business_stablishment = $transaction['business_stablishment'];
+            $businessTypeId = empty($transaction['business_type_id'])
+                ? 0
+                : $this->encryption->decrypt($transaction['business_type_id']);
+            $determination = $transaction['determination'];
+            $description = $transaction['description'];
+            $baseIndex = $index * 9 + 1;
+            $placeholders[] = "(\$" . $baseIndex . ", \$" . ($baseIndex + 1) . ", \$" . ($baseIndex + 2) . ", \$" . ($baseIndex + 3) . ", \$" . ($baseIndex + 4) . ", \$" . ($baseIndex + 5) . ", \$" . ($baseIndex + 6) . ", \$" . ($baseIndex + 7) . ", \$" . ($baseIndex + 8) . ", NOW(), NOW(), false)";
+            $values = array_merge($values, [
+                $centralGeneralLedgerId,
+                $generalLedgerId,
+                $calculate_tax,
+                $dc_type,
+                $amount,
+                $business_stablishment,
+                $businessTypeId,
+                $determination,
+                $description
+            ]);
+        }
+        $placeholderString = implode(', ', $placeholders);
+        $query = "INSERT INTO cm_sap.tb_gl_transactions (
                 central_general_ledger_id, general_ledger_id, calculate_tax, dc_type, amount, business_stablishment, business_type_id, determination, description, created_at, updated_at, is_deleted
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), false) RETURNING gl_transaction_id';
-        $result = pg_prepare($this->connection, "create_gl_transaction", $query);
+            ) VALUES $placeholderString RETURNING gl_transaction_id";
+        $result = pg_prepare($this->connection, 'gl_transactions', $query);
         if (!$result) {
-            throw new Exception('Failed to prepare SQL query for creating GL transaction.');
+            throw new Exception('Failed to prepare SQL query for creating GL transactions.');
         }
-        $result = pg_execute(
-            $this->connection,
-            "create_gl_transaction",
-            array($centralGeneralLedgerId, $generalLedgerId, $calculate_tax, $dc_type, $amount, $business_stablishment, $businessTypeId, $determination, $description)
-        );
+        $result = pg_execute($this->connection, 'gl_transactions', $values);
         if (!$result) {
-            throw new Exception('Failed to execute SQL query for creating GL transaction.');
+            throw new Exception('Failed to execute SQL query for creating GL transactions.');
         }
-        $glTransactionId = pg_fetch_result($result, 0, 0);
-        return $this->encryption->encrypt($glTransactionId);
-    }
-
-    public function updateGLTransaction(
-        $encryptedGLTransactionId,
-        $central_general_ledger_id,
-        $calculate_tax,
-        $dc_type,
-        $amount,
-        $business_stablishment,
-        $business_type_id,
-        $determination,
-        $description
-    ) {
-        $glTransactionId = $this->encryption->decrypt($encryptedGLTransactionId);
-        $centralGeneralLedgerId = $this->encryption->decrypt($central_general_ledger_id);
-        $businessTypeId = $this->encryption->decrypt($business_type_id);
-
-        $query = 'UPDATE cm_sap.tb_gl_transactions 
-                  SET central_general_ledger_id = $2, calculate_tax = $3, dc_type = $4, amount = $5, business_stablishment = $6, business_type_id = $7, determination = $8, description = $9, updated_at = NOW() 
-                  WHERE gl_transaction_id = $1 AND is_deleted = false';
-        $result = pg_prepare($this->connection, "update_gl_transaction", $query);
-        if (!$result) {
-            throw new Exception('Failed to prepare SQL query for updating GL transaction.');
+        $glTransactionIds = [];
+        while ($row = pg_fetch_assoc($result)) {
+            $glTransactionIds[] = $this->encryption->encrypt($row['gl_transaction_id']);
         }
-        $result = pg_execute(
-            $this->connection,
-            "update_gl_transaction",
-            array($glTransactionId, $centralGeneralLedgerId, $calculate_tax, $dc_type, $amount, $business_stablishment, $businessTypeId, $determination, $description)
-        );
-        if (!$result) {
-            throw new Exception('Failed to execute SQL query for updating GL transaction.');
-        }
-        return pg_affected_rows($result);
+        return $glTransactionIds;
     }
 
     public function deleteGLTransaction($encryptedGLTransactionId)
