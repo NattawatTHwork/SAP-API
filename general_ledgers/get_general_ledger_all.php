@@ -6,9 +6,29 @@ include_once '../auth/authorization.php';
 include_once '../class/general_ledgers.php';
 
 try {
-    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') { // ใช้ POST เพื่อรับข้อมูลการค้นหา
+        $data = json_decode(file_get_contents('php://input'), true);
+
         $generalLedgers = new GeneralLedgers();
-        $ledgerList = $generalLedgers->getAllGeneralLedgers();
+
+        // รับค่าการค้นหาจาก POST
+        $searchParams = [
+            'company_id' => isset($data['company_id']) ? $data['company_id'] : null,
+            'document_date' => isset($data['document_date']) ? $data['document_date'] : null,
+            'posting_date' => isset($data['posting_date']) ? $data['posting_date'] : null,
+            'document_type_id' => isset($data['document_type_id']) ? $data['document_type_id'] : null,
+            'reference' => isset($data['reference']) ? $data['reference'] : null,
+            'document_header_text' => isset($data['document_header_text']) ? $data['document_header_text'] : null,
+            'currency_id' => isset($data['currency_id']) ? $data['currency_id'] : null,
+            'branch_number_id' => isset($data['branch_number_id']) ? $data['branch_number_id'] : null
+        ];
+
+        // echo json_encode(["status" => "error", "message" => $data]);
+        // exit;
+
+
+        // ส่งค่าการค้นหาไปยังฟังก์ชัน getAllGeneralLedgers()
+        $ledgerList = $generalLedgers->getAllGeneralLedgers($searchParams);
 
         if ($ledgerList) {
             http_response_code(200);

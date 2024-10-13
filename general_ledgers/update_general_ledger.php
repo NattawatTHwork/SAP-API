@@ -15,7 +15,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
 
-        $required_fields = ['general_ledger_id', 'company_id'];
+        $required_fields = ['general_ledger_id', 'document_date', 'posting_date', 'company_id', 'document_type_id'];
         $missing_fields = [];
 
         foreach ($required_fields as $field) {
@@ -32,9 +32,9 @@ try {
             $posting_date = validateDate($data['posting_date']) ? $data['posting_date'] : null;
             $reference = isset($data['reference']) ? trim($data['reference']) : '';
             $document_header_text = isset($data['document_header_text']) ? trim($data['document_header_text']) : '';
-            $document_type = isset($data['document_type']) ? trim($data['document_type']) : '';
-            $branch_number = isset($data['branch_number']) ? trim($data['branch_number']) : '';
-            $currency = isset($data['currency']) ? trim($data['currency']) : '';
+            $document_type_id = isset($data['document_type_id']) ? trim($data['document_type_id']) : '';
+            $branch_number_id = isset($data['branch_number_id']) ? trim($data['branch_number_id']) : '';
+            $currency_id = isset($data['currency_id']) ? trim($data['currency_id']) : '';
             $exchange_rate = isset($data['exchange_rate']) ? trim($data['exchange_rate']) : '';
             $translatn_date = validateDate($data['translatn_date']) ? $data['translatn_date'] : null;
             $trading_part_ba = isset($data['trading_part_ba']) ? trim($data['trading_part_ba']) : '';
@@ -48,9 +48,9 @@ try {
                 $posting_date,
                 $reference,
                 $document_header_text,
-                $document_type,
-                $branch_number,
-                $currency,
+                $document_type_id,
+                $branch_number_id,
+                $currency_id,
                 $exchange_rate,
                 $translatn_date,
                 $trading_part_ba,
