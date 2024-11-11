@@ -121,7 +121,7 @@ class DocumentTypes
         if (!$result) {
             throw new Exception('Failed to execute SQL query for incrementing sequence.');
         }
-        $newSequence = pg_fetch_result($result, 0, 0);
+        $newSequence = pg_fetch_result($result, 0, 'sequence');
         return $newSequence;
     }
 }

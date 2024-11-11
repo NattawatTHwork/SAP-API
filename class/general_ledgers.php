@@ -36,7 +36,9 @@ class GeneralLedgers
             exchange_rate, 
             translatn_date, 
             trading_part_ba, 
-            calculate_tax
+            calculate_tax,
+            document_sequence,
+            year
         FROM cm_sap.tb_general_ledgers 
         INNER JOIN cm_sap.tb_companies 
             ON tb_general_ledgers.company_id = tb_companies.company_id 
@@ -49,11 +51,11 @@ class GeneralLedgers
             ON tb_general_ledgers.currency_id = tb_currencies.currency_id 
             AND tb_general_ledgers.currency_id != 0
         WHERE tb_general_ledgers.is_deleted = false';
-        
+
         // Array to hold the parameters for the query
         $params = [];
         $paramIndex = 1;
-        
+
         // Add conditions to the query only if parameters are not empty
         if (!empty($searchParams['company_id'])) {
             $query .= ' AND tb_general_ledgers.company_id = $' . $paramIndex;
@@ -95,10 +97,10 @@ class GeneralLedgers
             $params[] = $this->encryption->decrypt($searchParams['branch_number_id']);
             $paramIndex++;
         }
-        
+
         // Add the order by clause
         $query .= ' ORDER BY tb_general_ledgers.created_at ASC';
-    
+
         // Prepare and execute the query
         $result = pg_prepare($this->connection, "get_all_general_ledgers", $query);
         if (!$result) {
@@ -108,13 +110,13 @@ class GeneralLedgers
         if (!$result) {
             throw new Exception('Failed to execute SQL query for getting all general ledgers.');
         }
-    
+
         // Fetch all results
         $generalLedgers = pg_fetch_all($result);
         if ($generalLedgers === false) {
             return [];
         }
-    
+
         // Encrypt sensitive fields
         foreach ($generalLedgers as &$generalLedger) {
             $generalLedger['general_ledger_id'] = $this->encryption->encrypt($generalLedger['general_ledger_id']);
@@ -123,10 +125,10 @@ class GeneralLedgers
             $generalLedger['branch_number_id'] = ($this->encryption->encrypt($generalLedger['branch_number_id']) === 'Ny9TclFPb0NxNmtmOWlMUUlMS2c3dz09') ? '' : $this->encryption->encrypt($generalLedger['branch_number_id']);
             $generalLedger['currency_id'] = ($this->encryption->encrypt($generalLedger['currency_id']) === 'Ny9TclFPb0NxNmtmOWlMUUlMS2c3dz09') ? '' : $this->encryption->encrypt($generalLedger['currency_id']);
         }
-    
+
         return $generalLedgers;
     }
-        
+
     public function getGeneralLedger($encryptedGeneralLedgerId)
     {
         $generalLedgerId = $this->encryption->decrypt($encryptedGeneralLedgerId);
@@ -145,7 +147,9 @@ class GeneralLedgers
                       exchange_rate, 
                       translatn_date, 
                       trading_part_ba, 
-                      calculate_tax
+                      calculate_tax,
+                      document_sequence,
+                      year
                   FROM cm_sap.tb_general_ledgers 
                   INNER JOIN cm_sap.tb_companies ON tb_general_ledgers.company_id = tb_companies.company_id
                   WHERE tb_general_ledgers.is_deleted = false AND general_ledger_id = $1 
@@ -183,7 +187,9 @@ class GeneralLedgers
         $exchange_rate,
         $translatn_date,
         $trading_part_ba,
-        $calculate_tax
+        $calculate_tax,
+        $document_sequence, // Add document_sequence as a parameter
+        $year
     ) {
         $companyId = $this->encryption->decrypt($company_id);
         $DocumentTypeId = $this->encryption->decrypt($document_type_id);
@@ -194,16 +200,21 @@ class GeneralLedgers
             ? 0
             : $this->encryption->decrypt($currency_id);
 
+        // Update the query to include the document_sequence column
         $query = 'INSERT INTO cm_sap.tb_general_ledgers (
                     created_by, company_id, document_date, posting_date, reference, document_header_text, 
-                    document_type_id, branch_number_id, currency_id, exchange_rate, 
-                    translatn_date, trading_part_ba, calculate_tax, created_at, updated_at, is_deleted
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW(), false) 
+                    document_type_id, branch_number_id, currency_id, exchange_rate, translatn_date, 
+                    trading_part_ba, calculate_tax, document_sequence, year, created_at, updated_at, is_deleted
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), NOW(), false) 
                 RETURNING general_ledger_id';
+
+        // Prepare the query
         $result = pg_prepare($this->connection, "create_general_ledger", $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for creating general ledger.');
         }
+
+        // Execute the query and include document_sequence in the array of parameters
         $result = pg_execute($this->connection, "create_general_ledger", array(
             $created_by,
             $companyId,
@@ -217,11 +228,16 @@ class GeneralLedgers
             $exchange_rate,
             $translatn_date,
             $trading_part_ba,
-            $calculate_tax
+            $calculate_tax,
+            $document_sequence, // Add document_sequence to the parameter array
+            $year
         ));
+
         if (!$result) {
             throw new Exception('Failed to execute SQL query for creating general ledger.');
         }
+
+        // Fetch and return the general ledger ID
         $generalLedgerId = pg_fetch_result($result, 0, 0);
         return $this->encryption->encrypt($generalLedgerId);
     }

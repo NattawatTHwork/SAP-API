@@ -105,13 +105,15 @@ class GLTransactions
 
     public function createGLTransactions(
         $general_ledger_id,
-        $transactions
+        $transactions,
+        $document_sequence // Add document_sequence as a parameter
     ) {
         $generalLedgerId = $this->encryption->decrypt($general_ledger_id);
-
+    
         $placeholders = [];
         $values = [];
-
+        $item = 1; // Initialize item counter
+    
         foreach ($transactions as $index => $transaction) {
             $centralGeneralLedgerId = $this->encryption->decrypt($transaction['central_general_ledger_id']);
             $calculate_tax = $transaction['calculate_tax'];
@@ -123,8 +125,12 @@ class GLTransactions
                 : $this->encryption->decrypt($transaction['business_type_id']);
             $determination = $transaction['determination'];
             $description = $transaction['description'];
-            $baseIndex = $index * 9 + 1;
-            $placeholders[] = "(\$" . $baseIndex . ", \$" . ($baseIndex + 1) . ", \$" . ($baseIndex + 2) . ", \$" . ($baseIndex + 3) . ", \$" . ($baseIndex + 4) . ", \$" . ($baseIndex + 5) . ", \$" . ($baseIndex + 6) . ", \$" . ($baseIndex + 7) . ", \$" . ($baseIndex + 8) . ", NOW(), NOW(), false)";
+            $baseIndex = $index * 11 + 1; // Adjust base index for the new column (10 columns + item)
+            
+            // Add placeholders for item column
+            $placeholders[] = "(\$" . $baseIndex . ", \$" . ($baseIndex + 1) . ", \$" . ($baseIndex + 2) . ", \$" . ($baseIndex + 3) . ", \$" . ($baseIndex + 4) . ", \$" . ($baseIndex + 5) . ", \$" . ($baseIndex + 6) . ", \$" . ($baseIndex + 7) . ", \$" . ($baseIndex + 8) . ", \$" . ($baseIndex + 9) . ", \$" . ($baseIndex + 10) . ", NOW(), NOW(), false)";
+            
+            // Add values, including the item column
             $values = array_merge($values, [
                 $centralGeneralLedgerId,
                 $generalLedgerId,
@@ -134,28 +140,38 @@ class GLTransactions
                 $business_stablishment,
                 $businessTypeId,
                 $determination,
-                $description
+                $description,
+                $document_sequence, // Add document_sequence to values
+                $item // Add item value
             ]);
+    
+            $item++; // Increment item for the next transaction
         }
         $placeholderString = implode(', ', $placeholders);
+    
+        // Update the query to include item column
         $query = "INSERT INTO cm_sap.tb_gl_transactions (
-                central_general_ledger_id, general_ledger_id, calculate_tax, dc_type, amount, business_stablishment, business_type_id, determination, description, created_at, updated_at, is_deleted
+                central_general_ledger_id, general_ledger_id, calculate_tax, dc_type, amount, business_stablishment, business_type_id, determination, description, document_sequence, item, created_at, updated_at, is_deleted
             ) VALUES $placeholderString RETURNING gl_transaction_id";
+    
         $result = pg_prepare($this->connection, 'gl_transactions', $query);
         if (!$result) {
             throw new Exception('Failed to prepare SQL query for creating GL transactions.');
         }
+    
         $result = pg_execute($this->connection, 'gl_transactions', $values);
         if (!$result) {
             throw new Exception('Failed to execute SQL query for creating GL transactions.');
         }
+    
         $glTransactionIds = [];
         while ($row = pg_fetch_assoc($result)) {
             $glTransactionIds[] = $this->encryption->encrypt($row['gl_transaction_id']);
         }
+    
         return $glTransactionIds;
-    }
-
+    }    
+    
     public function deleteGLTransaction($encryptedGLTransactionId)
     {
         $glTransactionId = $this->encryption->decrypt($encryptedGLTransactionId);

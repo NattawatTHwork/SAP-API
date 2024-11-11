@@ -3,8 +3,8 @@ include_once '../include/header.php';
 include_once '../vendor/firebase/php-jwt/src/JWT.php';
 include_once '../vendor/firebase/php-jwt/src/Key.php';
 include_once '../auth/authorization.php';
-include_once '../class/general_ledgers.php'; // นำเข้า class GeneralLedgers
-include_once '../class/gl_transactions.php';
+include_once '../class/general_ledgers.php'; // Import GeneralLedgers class
+include_once '../class/gl_transactions.php'; // Import GLTransactions class
 include_once '../class/document_types.php'; // Import DocumentTypes class
 
 function validateDate($date, $format = 'Y-m-d')
@@ -40,7 +40,28 @@ try {
             $translatn_date = validateDate($data['translatn_date']) ? $data['translatn_date'] : null;
             $trading_part_ba = isset($data['trading_part_ba']) ? trim($data['trading_part_ba']) : '';
             $calculate_tax = isset($data['calculate_tax']) ? trim($data['calculate_tax']) : 'false';
+            $year = null;
+            if (validateDate($data['posting_date'])) {
+                $posting_date = $data['posting_date'];
+                $year = date('Y', strtotime($posting_date)); // Extract the year from the posting date
+            } else {
+                $posting_date = null;
+            }
 
+            // Increment document type sequence if document_type_id is provided
+            if (!empty($document_type_id)) {
+                $documentTypes = new DocumentTypes();
+                $newSequence = $documentTypes->incrementSequence($document_type_id);
+
+                // Check if newSequence is valid
+                if (empty($newSequence)) {
+                    throw new Exception("Failed to increment sequence for document type.");
+                }
+            } else {
+                throw new Exception("Document type ID is required.");
+            }
+
+            // Create General Ledger with the incremented sequence
             $generalLedgers = new GeneralLedgers();
             $generalLedgerId = $generalLedgers->createGeneralLedger(
                 $created_by,
@@ -55,21 +76,18 @@ try {
                 $exchange_rate,
                 $translatn_date,
                 $trading_part_ba,
-                $calculate_tax
+                $calculate_tax,
+                $newSequence, // Pass the sequence to the createGeneralLedger function
+                $year
             );
 
             if ($generalLedgerId) {
-                // Increment document type sequence if document_type_id is provided
-                if (!empty($document_type_id)) {
-                    $documentTypes = new DocumentTypes();
-                    $newSequence = $documentTypes->incrementSequence($document_type_id);
-                }
-
                 if (isset($data['transactions']) && is_array($data['transactions']) && !empty($data['transactions'])) {
                     $glTransactions = new GLTransactions();
                     $glTransactionIds = $glTransactions->createGLTransactions(
                         $generalLedgerId,
-                        $data['transactions']
+                        $data['transactions'],
+                        $newSequence // Pass the sequence to createGLTransactions
                     );
 
                     if (empty($glTransactionIds)) {
@@ -82,7 +100,7 @@ try {
                         "message" => "General Ledger and GL Transactions created successfully",
                         "general_ledger_id" => $generalLedgerId,
                         "gl_transaction_ids" => $glTransactionIds,
-                        "new_sequence" => $newSequence ?? null
+                        "new_sequence" => $newSequence
                     ]);
                 } else {
                     http_response_code(201);
@@ -90,7 +108,7 @@ try {
                         "status" => "success",
                         "message" => "General Ledger created successfully without GL Transactions",
                         "general_ledger_id" => $generalLedgerId,
-                        "new_sequence" => $newSequence ?? null
+                        "new_sequence" => $newSequence
                     ]);
                 }
             } else {
